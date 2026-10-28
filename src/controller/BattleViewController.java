@@ -12,11 +12,10 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.media.AudioClip;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
@@ -30,10 +29,12 @@ import java.util.Random;
 @SuppressWarnings({"SpellCheckingInspection", "unused"})
 public class BattleViewController {
 
+    @FXML private Pane effectsPane; // Layer για Floating Texts & Pop-ups
+    @FXML private StackPane battleRoot; // Το κεντρικό container της μάχης
+
     @FXML private VBox heroCard;
     @FXML private VBox enemyCard;
     @FXML private StackPane vsBadge;
-    @FXML private Pane effectsPane;
 
     @FXML private StackPane mainMenuOverlay;
 
@@ -71,7 +72,7 @@ public class BattleViewController {
     @FXML private Button attackBtn;
     @FXML private Button specialBtn;
     @FXML private Button defendBtn;
-    @FXML private Button summonBtn;
+    @FXML private Button summonBtn; // Το Backup κουμπί
     @FXML private Button nextBattleBtn;
 
     private Character hero;
@@ -80,16 +81,20 @@ public class BattleViewController {
     private final Random random = new Random();
 
     private int specialCooldown = 0;
-    private int summonCooldown = 0;
+    private int backupCooldown = 0;
 
-    // 1 έως 5 (Τα 5 Κεφάλαια της ιστορίας)
-    private int currentChapter = 1;
+    // Buff trackers διάρκειας γύρων
+    private int rageBuffTurns = 0;
+    private int guardBuffTurns = 0;
+
+    // 0 έως 5 (Το 0 περιλαμβάνει Τρελίτσα Wave 1 και Golfos Secret Boss Wave 2)
+    private int currentChapter = 0;
     private int hopeScore = 0;
     private boolean showingPostFightEpilogue = false;
 
     // Wave / Minion Gauntlet Σύστημα
     private int currentWave = 1;
-    private int maxWaves = 1;
+    private int maxWaves = 2;
 
     // Dialogue Buffs
     private int bonusAtk = 0;
@@ -99,7 +104,10 @@ public class BattleViewController {
     private ScaleTransition pulseBtnAnim;
     private final Map<String, AudioClip> soundCache = new HashMap<>();
 
-    // Εσωτερική κλάση για δυναμικούς εχθρούς/ήρωες χωρίς θέματα με constructors
+    // Background Music (BGM) Engine
+    private MediaPlayer bgmPlayer;
+    private String currentPlayingTrack = "";
+
     private static class StageFighter extends BossDouros {
         private final String customName;
         private final int customMaxHp;
@@ -147,7 +155,6 @@ public class BattleViewController {
         }
     }
 
-    // Δομή για κάθε γραμμή διαλόγου + προαιρετικές επιλογές (Choices)
     private static class DialogueLine {
         final String speaker;
         final String subtitle;
@@ -182,12 +189,14 @@ public class BattleViewController {
     @FXML
     public void initialize() {
         updateMoralityIndicator();
+        playBackgroundMusic("menu_theme");
     }
 
     public void initBattle(String heroKey, String enemyKey) {
         if (mainMenuOverlay != null) {
             mainMenuOverlay.setVisible(true);
         }
+        playBackgroundMusic("menu_theme");
     }
 
     public void initBattle(Character selectedHero, Character selectedEnemy) {
@@ -201,6 +210,7 @@ public class BattleViewController {
         if (mainMenuOverlay != null) {
             mainMenuOverlay.setVisible(true);
         }
+        playBackgroundMusic("menu_theme");
     }
 
     @FXML
@@ -208,14 +218,16 @@ public class BattleViewController {
         if (mainMenuOverlay != null) {
             mainMenuOverlay.setVisible(false);
         }
-        this.currentChapter = 1;
+        this.currentChapter = 0;
         this.hopeScore = 0;
         this.showingPostFightEpilogue = false;
         this.bonusAtk = 0;
         this.bonusDef = 0;
         this.startWithArmor = false;
+        this.rageBuffTurns = 0;
+        this.guardBuffTurns = 0;
         updateMoralityIndicator();
-        startChapter(1);
+        startChapter(0);
     }
 
     private void startChapter(int chapter) {
@@ -223,7 +235,7 @@ public class BattleViewController {
         this.showingPostFightEpilogue = false;
         this.currentWave = 1;
 
-        if (chapter == 2 || chapter == 3 || chapter == 4) {
+        if (chapter == 0 || chapter == 2 || chapter == 3 || chapter == 4) {
             this.maxWaves = 2;
         } else {
             this.maxWaves = 1;
@@ -231,6 +243,7 @@ public class BattleViewController {
 
         prepareChapterCharacters(chapter);
         buildChapterDialogue(chapter);
+        playBackgroundMusic("menu_theme");
         showDialogueOverlay();
     }
 
@@ -238,7 +251,10 @@ public class BattleViewController {
         Character baseHero;
         String heroDisplayName;
 
-        if (chapter == 3 && currentWave == 2) {
+        if (chapter == 0) {
+            baseHero = new StageFighter("kNotJohn", 110, 22, 6);
+            heroDisplayName = "kNotJohn";
+        } else if (chapter == 3 && currentWave == 2) {
             baseHero = new MrGoun();
             heroDisplayName = "Mr. Goun";
         } else if (chapter == 5) {
@@ -260,7 +276,13 @@ public class BattleViewController {
             hero.setStatus(StatusEffect.WOOD_ARMOR);
         }
 
-        if (currentWave == 1 && maxWaves > 1) {
+        if (chapter == 0) {
+            if (currentWave == 1) {
+                enemy = new StageFighter("Trelitsas", 65, 9, 2);
+            } else {
+                enemy = new StageFighter("Golfos", 95, 15, 5);
+            }
+        } else if (currentWave == 1 && maxWaves > 1) {
             int minionHp = (chapter == 2) ? 75 : (chapter == 3 ? 85 : 95);
             int minionAtk = (chapter == 2) ? 14 : 16;
             enemy = new StageFighter("Douros's Minions", minionHp, minionAtk, 5);
@@ -277,11 +299,74 @@ public class BattleViewController {
         }
     }
 
+    private void buildGolfosMidChapterDialogue() {
+        activeDialogueQueue.clear();
+        currentDialogueIndex = 0;
+
+        cutsceneTitleLabel.setText("SECRET ENCOUNTER: Ο GOLFOS ΖΗΤΑΕΙ ΤΑ ΡΕΣΤΑ!");
+
+        activeDialogueQueue.add(new DialogueLine(
+                "GOLFOS", "• Ο ΚΟΛΛΗΤΟΣ ΑΠΟ ΤΟΝ ΕΥΟΣΜΟ",
+                "«Ποιος τόλμησε να αγγίξει τον Τρελίτσα ρε; Μάγκα με το ρόπαλο, νομίζεις ότι στον Εύοσμο είμαστε κορόιδα;»",
+                "golfos", "#e67e22", true
+        ).withChoices(
+                new String[]{"🏏 «Έλα κι εσύ να φας τις ροπαλιές σου!» (+ATK)", "🕶️ «Χαλάρωσε δικέ μου, πάρτε ταξί για δυτικά.» (+DEF)"},
+                new String[]{
+                        "kNotJohn: «Όποιος έρχεται από τον Εύοσμο με τουπέ, φεύγει με καρούμπαλο!» (+5 Attack)",
+                        "kNotJohn: «Κοίτα να πάρεις το φιλαράκι σου και να εξαφανιστείτε πριν νευριάσω.» (+4 Defense)"
+                },
+                new int[]{1, 1}
+        ));
+
+        activeDialogueQueue.add(new DialogueLine(
+                "TUNG TUNG", "• Ο BRAWLER ΤΗΣ ΟΜΑΔΑΣ",
+                "«kNotJohn! Είμαι πίσω σου! Κάλεσέ με με το κουμπί Backup να του σπάσω τα μούτρα!»",
+                "tung_tung", "#2ecc71", false
+        ));
+
+        playBackgroundMusic("menu_theme");
+        showDialogueOverlay();
+    }
+
     private void buildChapterDialogue(int chapter) {
         activeDialogueQueue.clear();
         currentDialogueIndex = 0;
 
-        if (chapter == 1) {
+        if (chapter == 0) {
+            cutsceneTitleLabel.setText("CHAPTER 0: TUTORIAL OVER — GO BACK TO EVOSMOS!");
+
+            activeDialogueQueue.add(new DialogueLine(
+                    "kNotJohn", "• ROOKIE ME TO ΡΟΠΑΛΟ",
+                    "«Gotcha! Man, έχω δει βρεγμένο χαρτόκουτο να προβάλλει μεγαλύτερη αντίσταση από εσένα, 'boss'!»",
+                    "knotjohn", "#a6e22e", false
+            ));
+
+            activeDialogueQueue.add(new DialogueLine(
+                    "TRELITSAS", "• THE PATHETIC (TUTORIAL BOSS)",
+                    "«OOF! Πρόσεχε την πανοπλία! Δεν είναι φτιαγμένη για wrestling! Και... ο Εύοσμος έχει μεγάλο street cred!»",
+                    "trelitsas", "#e74c3c", true
+            ).withChoices(
+                    new String[]{"🏏 «Γύρνα στον Εύοσμο!» (+ATK)", "😂 «Πες τα στον φίλο σου τον Golfos!» (+DEF)"},
+                    new String[]{
+                            "kNotJohn: «Άσε το παραμύθι. Γύρνα πίσω στον Εύοσμο εκεί που ανήκεις!» (+5 Attack)",
+                            "kNotJohn: «Πήγαινε στον κολλητό σου τον Golfos και πες του ότι σε έδειρε ένας τύπος με ρόπαλο του μπέιζμπολ!» (+4 Defense)"
+                    },
+                    new int[]{1, 1}
+            ));
+
+            activeDialogueQueue.add(new DialogueLine(
+                    "TRELITSAS", "• ΑΠΟΓΟΗΤΕΥΣΗ",
+                    "«Ο Golfos θα γελάει μαζί μου για μέρες... Μάλλον πρέπει να βρούμε και οι δύο κάνα καινούργιο χόμπι.»",
+                    "trelitsas", "#e74c3c", true
+            ));
+
+            activeDialogueQueue.add(new DialogueLine(
+                    "TUNG TUNG", "• BRAWLER BACKUP",
+                    "«kNotJohn, πάτα το κουμπί Backup όποτε θες για Heavy Slam!»",
+                    "tung_tung", "#2ecc71", false
+            ));
+
+        } else if (chapter == 1) {
             cutsceneTitleLabel.setText("CHAPTER 1: Ο ΠΑΤΟΣ ΚΑΙ Η ΜΑΣΚΑ");
 
             activeDialogueQueue.add(new DialogueLine(
@@ -291,14 +376,14 @@ public class BattleViewController {
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "CHLOE", "• Η ΠΡΩΗΝ",
+                    "RAFAILIA", "• Η ΠΡΩΗΝ",
                     "«Κοίτα τα χάλια σου! Χωρίς φράγκα, χωρίς δουλειά, ένας σκέτος loser. Άσε με ησυχία, τελειώσαμε!»",
-                    "chloe", "#f1c40f", true
+                    "rafailia", "#f1c40f", true
             ).withChoices(
                     new String[]{"😠 Τσακώσου μαζί της", "🌧️ Παρακάλεσέ την να μείνει", "🚶 Φύγε σιωπηλά στη βροχή"},
                     new String[]{
-                            "«Φύγε λοιπόν, Chloe! Όταν τα πράγματα δυσκολεύουν, κοιτάς μόνο τον εαυτό σου!» — Εκείνη γυρνάει την πλάτη.",
-                            "«Περίμενε, Chloe...» — Εκείνη γελάει ειρωνικά και σε αφήνει μόνο στο βρεγμένο πεζοδρόμιο.",
+                            "«Φύγε λοιπόν, Rafailia! Όταν τα πράγματα δυσκολεύουν, κοιτάς μόνο τον εαυτό σου!» — Εκείνη γυρνάει την πλάτη.",
+                            "«Περίμενε, Rafailia...» — Εκείνη γελάει ειρωνικά και σε αφήνει μόνο στο βρεγμένο πεζοδρόμιο.",
                             "Δεν λες λέξη. Σφίγγεις τις γροθιές σου και την κοιτάς να χάνεται στη βροχή."
                     },
                     new int[]{-1, 0, 1}
@@ -333,16 +418,16 @@ public class BattleViewController {
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "kNotJohn & TUNG TUNG", "• ΟΙ ROOKIES",
-                    "«Captain Saver! Nightgoon! Mr. Goun! Είμαστε έτοιμοι να καθαρίσουμε τη γειτονιά με τα ρόπαλά μας!»",
-                    "knotjohn", "#a6e22e", true
+                    "kNotJohn & TUNG TUNG", "• ΟΙ ROOKIES ΣΤΗΝ ΠΡΩΤΗ ΓΡΑΜΜΗ",
+                    "«Nightgoon! Είμαστε έτοιμοι να σε στηρίξουμε! Πάτα το Backup και διάλεξε ποιον από τους δυο μας χρειάζεσαι!»",
+                    "tung_tung", "#2ecc71", true
             ).withChoices(
-                    new String[]{"🛡️ Φέρσου σαν αυστηρός μεγάλος αδερφός", "🌟 Ενθάρρυνε τον ενθουσιασμό τους"},
+                    new String[]{"💥 Ενεργοποίησε το Street Rage του Tung Tung (+ATK)", "🛡️ Κράτα αμυντική κάλυψη με kNotJohn (+DEF)"},
                     new String[]{
-                            "«Κάτω τα ρόπαλα, μικροί. Οι δρόμοι δεν είναι παιχνίδι.»",
-                            "«Έχετε τη σωστή φλόγα, μάγκες! Μείνετε δίπλα μας.»"
+                            "Tung Tung: «Έτσι μπράβο! Όποιο Minion πλησιάσει θα ισοπεδωθεί!» (+5 Attack)",
+                            "kNotJohn: «Κατάλαβα, κρατάμε τις γραμμές και καλύπτουμε τα νώτα σας!» (+4 Defense)"
                     },
-                    new int[]{-1, 2}
+                    new int[]{1, 2}
             ));
 
             activeDialogueQueue.add(new DialogueLine(
@@ -407,13 +492,13 @@ public class BattleViewController {
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "NIGHTGOON", "• ΜΟΝΟΣ ΣΤΟΝ ΑΓΩΝΑ",
-                    "Ο Captain Saver παγιδεύτηκε. Πρέπει να βγάλουμε το φίδι από την τρύπα απέναντι στον Douros μόνοι μας με τον Mr. Goun!",
-                    "nightgoon", "#00d2ff", false
+                    "TUNG TUNG & kNotJohn", "• ΟΙ ΠΡΟΣΤΑΤΕΣ",
+                    "«Nightgoon, Mr. Goun! Αναλαμβάνουμε εμείς τα τσιράκια του Douros στην παραλία για να έχετε ελεύθερο πεδίο!»",
+                    "tung_tung", "#2ecc71", false
             ).withChoices(
                     new String[]{"🏙️ Περιόρισε τις ζημιές (Ξεκίνα με Ασπίδα)", "⚔️ Ολική επίθεση στον Doctor Douros (+ATK)"},
                     new String[]{
-                            "«kNotJohn, Tung! Κρατήστε γραμμή, αναλαμβάνω τον Douros!» (+Wood Armor)",
+                            "«Tung, John! Κρατήστε τους εκεί, αναλαμβάνω τον Douros!» (+Wood Armor)",
                             "«Δεν υπάρχει χρόνος! Χτυπήστε τον Douros με ό,τι έχετε!» (+5 Attack)"
                     },
                     new int[]{2, -2}
@@ -435,8 +520,8 @@ public class BattleViewController {
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "MR. GOUN & NIGHTGOON", "• ΣΤΟ ΠΛΕΥΡΟ ΤΟΥ",
-                    "«Captain Saver, είμαστε από πίσω σου! Τελείωσέ το μια για πάντα!»",
+                    "MR. GOUN, TUNG TUNG & NIGHTGOON", "• ΣΤΟ ΠΛΕΥΡΟ ΤΟΥ",
+                    "«Captain Saver, είμαστε όλοι από πίσω σου! Τελείωσέ το μια για πάντα!»",
                     "mrgoun", "#f5af19", false
             ).withChoices(
                     new String[]{"🔥 Captain Saver: Πολέμησε με όλη σου τη δύναμη (+ATK)", "🛡️ Captain Saver: Κράτα την ψυχραιμία σου (+DEF)"},
@@ -458,17 +543,18 @@ public class BattleViewController {
 
         activeDialogueQueue.add(new DialogueLine(
                 "CAPTAIN SAVER", "• ΟΡΘΙΟΣ ΣΤΟ ΤΕΛΟΣ",
-                "Η Sunday ηττήθηκε. Ο Captain Saver στέκεται στην ταράτσα μαζί με τον Nightgoon και τον Mr. Goun. Η πόλη σώθηκε.",
+                "Η Sunday ηττήθηκε. Ο Captain Saver στέκεται στην ταράτσα μαζί με τον Nightgoon, τον Mr. Goun, τον kNotJohn και τον Tung Tung. Η πόλη σώθηκε.",
                 "captain_saver", "#00d2ff", false
         ).withChoices(
-                new String[]{"🕯️ Συνέχισε ως ο Φύλακας της Ελπίδας", "🏙️ Παρέδωσε τη σκυτάλη στον Nightgoon"},
+                new String[]{"🕯️ Συνέχισε ως ο Φύλακας της Ελπίδας", "🏙️ Παρέδωσε τη σκυτάλη στη νέα γενιά"},
                 new String[]{
-                        "ENDING A: Ο Captain Saver ξαναβρίσκει την πίστη του και συνεχίζει να προστατεύει τη Θεσσαλονίκη μαζί με τη νέα γενιά!",
-                        "ENDING B: Ο Captain Saver κρεμάει την κάπα δικαιωμένος και παραδίδει τα κλειδιά της πόλης στον Nightgoon και τον Mr. Goun!"
+                        "ENDING A: Ο Captain Saver ξαναβρίσκει την πίστη του και συνεχίζει να προστατεύει τη Θεσσαλονίκη μαζί με την ομάδα!",
+                        "ENDING B: Ο Captain Saver κρεμάει την κάπα δικαιωμένος και παραδίδει τα κλειδιά της πόλης στον Nightgoon, τον kNotJohn και τον Tung Tung!"
                 },
                 new int[]{5, 5}
         ));
 
+        playBackgroundMusic("menu_theme");
         showDialogueOverlay();
     }
 
@@ -559,7 +645,9 @@ public class BattleViewController {
     private void updateCutsceneNextButtonText(boolean isLastLine) {
         if (cutsceneNextBtn == null) return;
         if (isLastLine) {
-            if (currentChapter == 1) cutsceneNextBtn.setText("ΠΡΟΣ CHAPTER 2 ➔");
+            if (currentChapter == 0 && currentWave == 1) cutsceneNextBtn.setText("ΠΡΟΣ ΤΟ SECRET BATTLE ➔");
+            else if (currentChapter == 0 && currentWave == 2) cutsceneNextBtn.setText("ΠΡΟΣ CHAPTER 1 ➔");
+            else if (currentChapter == 1) cutsceneNextBtn.setText("ΠΡΟΣ CHAPTER 2 ➔");
             else if (showingPostFightEpilogue) cutsceneNextBtn.setText("ΤΕΛΟΣ ΙΣΤΟΡΙΑΣ ★");
             else cutsceneNextBtn.setText("ΣΤΗ ΜΑΧΗ! ⚔");
         } else {
@@ -591,7 +679,13 @@ public class BattleViewController {
             hopeScore += line.moralityDeltas[choiceIdx];
             updateMoralityIndicator();
 
-            if (currentChapter == 3) {
+            if (currentChapter == 0) {
+                if (choiceIdx == 0) bonusAtk += 5;
+                else if (choiceIdx == 1) bonusDef += 4;
+            } else if (currentChapter == 2) {
+                if (choiceIdx == 0) bonusAtk += 5;
+                else if (choiceIdx == 1) bonusDef += 4;
+            } else if (currentChapter == 3) {
                 if (choiceIdx == 0) bonusAtk += 5;
                 else if (choiceIdx == 1) bonusDef += 4;
             } else if (currentChapter == 4) {
@@ -644,6 +738,16 @@ public class BattleViewController {
     }
 
     private void finishDialoguePhase() {
+        if (currentChapter == 0 && currentWave == 1) {
+            closeCutsceneAndFight();
+            return;
+        }
+
+        if (currentChapter == 0 && currentWave == 2) {
+            closeCutsceneAndFight();
+            return;
+        }
+
         if (currentChapter == 1) {
             startChapter(2);
             return;
@@ -670,6 +774,13 @@ public class BattleViewController {
         }
         setupArenaUI();
         playIntroAnimation();
+
+        if (currentChapter == 4 || currentChapter == 5) {
+            playBackgroundMusic("boss_theme");
+        } else {
+            playBackgroundMusic("battle_theme");
+        }
+
         if (isDouros(enemy)) {
             playSound("douros_intro");
         }
@@ -678,7 +789,7 @@ public class BattleViewController {
     private void setupArenaUI() {
         isPlayerTurn = true;
         specialCooldown = 0;
-        summonCooldown = 0;
+        backupCooldown = 0;
         hideNextBattleButton();
         setButtonsEnabled(true);
 
@@ -688,13 +799,18 @@ public class BattleViewController {
 
         stageLabel.setText("CHAPTER " + currentChapter + " • WAVE " + currentWave + "/" + maxWaves);
 
+        // Dynamic Chapter Background apply
+        applyDynamicBackground();
+
         heroHpBar.setProgress(1.0);
         enemyHpBar.setProgress(1.0);
         updateUI();
         updateSpecialButtonText();
         updateSummonButtonState();
 
-        if (currentChapter == 3 && currentWave == 2) {
+        if (currentChapter == 0) {
+            loadCharacterImage(heroImageView, "knotjohn");
+        } else if (currentChapter == 3 && currentWave == 2) {
             loadCharacterImage(heroImageView, "mrgoun");
         } else if (currentChapter == 5) {
             loadCharacterImage(heroImageView, "captain_saver");
@@ -702,7 +818,10 @@ public class BattleViewController {
             loadCharacterImage(heroImageView, "nightgoon");
         }
 
-        if (currentWave == 1 && maxWaves > 1) {
+        if (currentChapter == 0) {
+            if (currentWave == 1) loadCharacterImage(enemyImageView, "trelitsas");
+            else loadCharacterImage(enemyImageView, "golfos");
+        } else if (currentWave == 1 && maxWaves > 1) {
             loadCharacterImage(enemyImageView, "minions");
         } else if (currentChapter == 2) {
             loadCharacterImage(enemyImageView, "minions");
@@ -713,6 +832,56 @@ public class BattleViewController {
         }
 
         battleLogLabel.setText("CHAPTER " + currentChapter + " (WAVE " + currentWave + "/" + maxWaves + "): " + enemy.getName() + "!");
+    }
+
+    // =========================================================================
+    // ΑΣΦΑΛΗΣ & ΔΥΝΑΜΙΚΗ ΦΟΡΤΩΣΗ BACKGROUND (ΑΝΑ ΚΕΦΑΛΑΙΟ)
+    // =========================================================================
+    private void applyDynamicBackground() {
+        try {
+            String bgName = "chapter" + currentChapter + "_bg";
+            File file = new File("src/images/" + bgName + ".png");
+            if (!file.exists()) {
+                file = new File("src/images/" + bgName + ".jpg");
+            }
+
+            if (file.exists()) {
+                Image bgImage = new Image(file.toURI().toString());
+                BackgroundImage backImg = new BackgroundImage(
+                        bgImage,
+                        BackgroundRepeat.NO_REPEAT,
+                        BackgroundRepeat.NO_REPEAT,
+                        BackgroundPosition.CENTER,
+                        new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true)
+                );
+                Background background = new Background(backImg);
+
+                // 1. Εφαρμογή στο battleRoot αν υπάρχει
+                if (battleRoot != null) {
+                    battleRoot.setBackground(background);
+                }
+
+                // 2. Εφαρμογή απευθείας στο root της σκηνής (σίγουρη λύση)
+                if (heroCard != null && heroCard.getScene() != null && heroCard.getScene().getRoot() instanceof Region) {
+                    ((Region) heroCard.getScene().getRoot()).setBackground(background);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private int getEffectiveHeroAttack() {
+        int base = hero.getAttackPower();
+        if (rageBuffTurns > 0) base += 8;
+        if (hero.getStatus() == StatusEffect.DISTRACTED) base = base / 2;
+        return base;
+    }
+
+    private int getEffectiveHeroDefense() {
+        int base = hero.getDefense();
+        if (guardBuffTurns > 0) base += 4;
+        if (hero.getStatus() == StatusEffect.WOOD_ARMOR) base = (int) (base * 1.5);
+        return base;
     }
 
     @FXML
@@ -727,16 +896,16 @@ public class BattleViewController {
 
         boolean wasDistracted = (hero.getStatus() == StatusEffect.DISTRACTED);
 
+        int effAtk = getEffectiveHeroAttack();
         int hpBefore = enemy.getCurrentHp();
-        hero.performBasicAttack(enemy);
+        enemy.takeDamage(effAtk);
         int actualDamage = hpBefore - enemy.getCurrentHp();
 
         if (wasDistracted) {
             hero.setStatus(StatusEffect.NORMAL);
         }
 
-        if (specialCooldown > 0) specialCooldown--;
-        if (summonCooldown > 0) summonCooldown--;
+        decrementTurnCounters();
 
         playAttackLunge(heroCard, true, () -> {
             playSound("punch");
@@ -756,7 +925,7 @@ public class BattleViewController {
         setButtonsEnabled(false);
 
         specialCooldown = 2;
-        if (summonCooldown > 0) summonCooldown--;
+        decrementTurnCounters();
 
         playCardGlow(heroCard, "#af7ac5");
 
@@ -765,7 +934,7 @@ public class BattleViewController {
             int hpBefore = enemy.getCurrentHp();
 
             double multiplier = (hopeScore < 0) ? 1.95 : 1.75;
-            int rawDmg = (int) (hero.getAttackPower() * multiplier);
+            int rawDmg = (int) (getEffectiveHeroAttack() * multiplier);
             enemy.takeDamage(rawDmg);
             int actualDmg = hpBefore - enemy.getCurrentHp();
 
@@ -788,8 +957,7 @@ public class BattleViewController {
         isPlayerTurn = false;
         setButtonsEnabled(false);
 
-        if (specialCooldown > 0) specialCooldown--;
-        if (summonCooldown > 0) summonCooldown--;
+        decrementTurnCounters();
 
         playSound("shield");
         hero.setStatus(StatusEffect.WOOD_ARMOR);
@@ -803,64 +971,172 @@ public class BattleViewController {
         pause.play();
     }
 
-    @FXML
-    private void handleSummonAssist() {
-        if (!isPlayerTurn || summonCooldown > 0) return;
-        summonKnotJohn();
+    private void decrementTurnCounters() {
+        if (specialCooldown > 0) specialCooldown--;
+        if (backupCooldown > 0) backupCooldown--;
+        if (rageBuffTurns > 0) rageBuffTurns--;
+        if (guardBuffTurns > 0) guardBuffTurns--;
     }
 
-    private void summonKnotJohn() {
-        isPlayerTurn = false;
+    // =========================================================================
+    // FOCUS & CLICK-THROUGH SHIELD FIX ΓΙΑ ΤΟ BACKUP POP-UP (ΚΛΕΙΔΩΜΑ CLICK)
+    // =========================================================================
+    @FXML
+    private void handleSummonAssist() {
+        if (!isPlayerTurn || backupCooldown > 0) return;
+
+        // Στο Chapter 0 ο παίκτης ελέγχει kNotJohn, άρα το Backup καλεί Tung Tung άμεσα
+        if (currentChapter == 0) {
+            executeTungTungAssist();
+            return;
+        }
+
+        // Στα υπόλοιπα chapters εμφανίζεται η ασφαλής Selection Shield
+        showRookieSelectionOverlay();
+    }
+
+
+
+    private void showRookieSelectionOverlay() {
+        if (effectsPane == null) return;
+
+        // Ενεργοποίηση κλικ για να πατηθεί το popup
+        effectsPane.setMouseTransparent(false);
+        effectsPane.toFront();
+
+        VBox popup = new VBox(15);
+        popup.setAlignment(Pos.CENTER);
+        popup.setPrefSize(400, 220);
+        popup.setStyle(
+                "-fx-background-color: #0b0f19; " +
+                        "-fx-border-color: #00d2ff; -fx-border-width: 3; " +
+                        "-fx-background-radius: 16; -fx-border-radius: 16; -fx-padding: 20;"
+        );
+        popup.setEffect(new DropShadow(40, Color.web("#00d2ff")));
+
+        Label title = new Label("ΔΙΑΛΕΞΕ ROOKIE BACKUP");
+        title.setStyle("-fx-text-fill: #00d2ff; -fx-font-weight: bold; -fx-font-size: 18px; -fx-font-family: 'Impact';");
+
+        HBox btnRow = new HBox(15);
+        btnRow.setAlignment(Pos.CENTER);
+
+        Button btnJohn = new Button("kNotJohn\n[HEAL & GUARD]");
+        btnJohn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12 16; -fx-background-radius: 10; -fx-cursor: hand; -fx-text-alignment: center;");
+
+        Button btnTung = new Button("Tung Tung\n[SLAM & RAGE]");
+        btnTung.setStyle("-fx-background-color: #e67e22; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12 16; -fx-background-radius: 10; -fx-cursor: hand; -fx-text-alignment: center;");
+
+        Button btnCancel = new Button("Ακύρωση");
+        btnCancel.setStyle("-fx-background-color: #555e6d; -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 6 14;");
+
+        btnRow.getChildren().addAll(btnJohn, btnTung);
+        popup.getChildren().addAll(title, btnRow, btnCancel);
+
+        popup.setLayoutX(200);
+        popup.setLayoutY(140);
+
         setButtonsEnabled(false);
-        summonCooldown = 3;
-        if (specialCooldown > 0) specialCooldown--;
+
+        // Στο κλικ κλείνουμε το popup και ΞΕΚΛΕΙΔΩΝΟΥΜΕ τα πίσω κουμπιά κάνοντας mouseTransparent = true
+        btnJohn.setOnMouseClicked(event -> {
+            effectsPane.getChildren().remove(popup);
+            effectsPane.setMouseTransparent(true);
+            executeKnotJohnAssist();
+        });
+
+        btnTung.setOnMouseClicked(event -> {
+            effectsPane.getChildren().remove(popup);
+            effectsPane.setMouseTransparent(true);
+            executeTungTungAssist();
+        });
+
+        btnCancel.setOnMouseClicked(event -> {
+            effectsPane.getChildren().remove(popup);
+            effectsPane.setMouseTransparent(true);
+            setButtonsEnabled(true);
+        });
+
+        effectsPane.getChildren().add(popup);
+        popup.toFront();
+    }
+    private void executeKnotJohnAssist() {
+        isPlayerTurn = false;
+        backupCooldown = 3;
+        decrementTurnCounters();
 
         playSound("knotjohn");
         playSound("special");
         playCardGlow(heroCard, "#a6e22e");
 
-        playAssistPopupAnimation(() -> {
-            hero.heal(25);
-            spawnFloatingText(195, 135, "+25 HP (BACKUP!)", "#2ecc71");
+        playAssistPopupAnimation("kNotJohn", "BAT STUN & DEFENSE GUARD", "#a6e22e", "knotjohn", () -> {
+            hero.heal(30);
+            guardBuffTurns = 2; // +4 Defense για 2 γύρους
+            spawnFloatingText(195, 130, "+30 HP & GUARD!", "#2ecc71");
 
             int hpBefore = enemy.getCurrentHp();
-            int assistDmg = (int) (hero.getAttackPower() * 1.4);
+            int assistDmg = (int) (hero.getAttackPower() * 1.3);
             enemy.takeDamage(assistDmg);
             enemy.setStatus(StatusEffect.DISTRACTED);
             int actualDmg = hpBefore - enemy.getCurrentHp();
 
             playHitEffect(enemyCard, "#a6e22e");
-            spawnFloatingText(705, 145, "kNotJohn -" + actualDmg + " HP!", "#a6e22e");
+            spawnFloatingText(705, 145, "STUN -" + actualDmg + " HP!", "#a6e22e");
 
             updateUI();
-            battleLogLabel.setText("Ο kNotJohn μπαίνει στη μάχη! +25 HP και " + actualDmg + " ζημιά!");
+            battleLogLabel.setText("Ο kNotJohn μπαίνει στη μάχη! +30 HP, Guard (+4 DEF) και Stun στον εχθρό!");
             checkGameStatus();
         });
     }
 
-    private void playAssistPopupAnimation(Runnable onStrike) {
+    private void executeTungTungAssist() {
+        isPlayerTurn = false;
+        backupCooldown = 3;
+        decrementTurnCounters();
+
+        playSound("special");
+        playSound("punch");
+        playCardGlow(heroCard, "#2ecc71");
+
+        playAssistPopupAnimation("Tung Tung", "BRAWLER SLAM & STREET RAGE", "#2ecc71", "tung_tung", () -> {
+            rageBuffTurns = 2; // +8 Attack για 2 γύρους
+            spawnFloatingText(195, 130, "STREET RAGE! (+8 ATK)", "#f39c12");
+
+            int hpBefore = enemy.getCurrentHp();
+            int heavyDmg = (int) (hero.getAttackPower() * 1.85);
+            enemy.takeDamage(heavyDmg);
+            int actualDmg = hpBefore - enemy.getCurrentHp();
+
+            playHitEffect(enemyCard, "#2ecc71");
+            spawnFloatingText(705, 140, "TUNG SLAM! -" + actualDmg + " HP!", "#2ecc71");
+
+            updateUI();
+            battleLogLabel.setText("Ο Tung Tung τσακίζει τον εχθρό για " + actualDmg + " ζημιά και δίνει Street Rage (+8 ATK)!");
+            checkGameStatus();
+        });
+    }
+
+    private void playAssistPopupAnimation(String name, String sub, String colorHex, String imgKey, Runnable onStrike) {
         if (effectsPane == null) {
             if (onStrike != null) onStrike.run();
             return;
         }
 
-        String borderColorHex = "#a6e22e";
         VBox assistBox = new VBox(10);
         assistBox.setAlignment(Pos.CENTER);
         assistBox.setPrefWidth(280);
         assistBox.setPrefHeight(340);
         assistBox.setStyle(
                 "-fx-background-color: rgba(15, 22, 34, 0.98); " +
-                        "-fx-border-color: " + borderColorHex + "; -fx-border-width: 4; " +
+                        "-fx-border-color: " + colorHex + "; -fx-border-width: 4; " +
                         "-fx-background-radius: 18; -fx-border-radius: 18; -fx-padding: 16;"
         );
 
-        DropShadow cyberGlow = new DropShadow(45, Color.web(borderColorHex));
+        DropShadow cyberGlow = new DropShadow(45, Color.web(colorHex));
         cyberGlow.setSpread(0.45);
         assistBox.setEffect(cyberGlow);
 
-        Label title = new Label("⚡ ASSIST: kNotJohn ⚡");
-        title.setStyle("-fx-text-fill: " + borderColorHex + "; -fx-font-weight: bold; -fx-font-size: 19px;");
+        Label title = new Label("⚡ ASSIST: " + name.toUpperCase() + " ⚡");
+        title.setStyle("-fx-text-fill: " + colorHex + "; -fx-font-weight: bold; -fx-font-size: 19px;");
 
         StackPane imgFrame = new StackPane();
         imgFrame.setPrefSize(240, 240);
@@ -870,10 +1146,10 @@ public class BattleViewController {
         assistImg.setFitWidth(225);
         assistImg.setFitHeight(225);
         assistImg.setPreserveRatio(true);
-        loadCharacterImage(assistImg, "knotjohn");
+        loadCharacterImage(assistImg, imgKey);
         imgFrame.getChildren().add(assistImg);
 
-        Label subTitle = new Label("ROOKIE BASEBALL BAT");
+        Label subTitle = new Label(sub);
         subTitle.setStyle("-fx-text-fill: #00d2ff; -fx-font-weight: bold; -fx-font-size: 13px;");
 
         assistBox.getChildren().addAll(title, imgFrame, subTitle);
@@ -909,10 +1185,15 @@ public class BattleViewController {
 
                 PauseTransition pause = new PauseTransition(Duration.seconds(1.2));
                 pause.setOnFinished(event -> {
-                    prepareChapterCharacters(currentChapter);
-                    setupArenaUI();
-                    playIntroAnimation();
-                    battleLogLabel.setText("ΠΡΟΣΟΧΗ! WAVE 2: Ο Boss " + enemy.getName() + " κάνει είσοδο!");
+                    if (currentChapter == 0 && currentWave == 2) {
+                        prepareChapterCharacters(currentChapter);
+                        buildGolfosMidChapterDialogue();
+                    } else {
+                        prepareChapterCharacters(currentChapter);
+                        setupArenaUI();
+                        playIntroAnimation();
+                        battleLogLabel.setText("ΠΡΟΣΟΧΗ! WAVE 2: Ο Boss " + enemy.getName() + " κάνει είσοδο!");
+                    }
                 });
                 pause.play();
             } else {
@@ -924,7 +1205,10 @@ public class BattleViewController {
                     playSound("victory");
                 }
 
-                if (currentChapter < 5) {
+                if (currentChapter == 0) {
+                    battleLogLabel.setText("SECRET STAGE COMPLETE! Ο Τρελίτσας και ο Golfos γύρισαν στον Εύοσμο!");
+                    showNextBattleButton("ΠΡΟΣ CHAPTER 1 ➔", true);
+                } else if (currentChapter < 5) {
                     battleLogLabel.setText("ΝΙΚΗ ΣΤΟ CHAPTER " + currentChapter + "! Η ιστορία προχωράει...");
                     showNextBattleButton("ΠΡΟΣ CHAPTER " + (currentChapter + 1) + " ➔", true);
                 } else {
@@ -945,6 +1229,33 @@ public class BattleViewController {
 
         boolean bossWasDistracted = (enemy.getStatus() == StatusEffect.DISTRACTED);
         int roll = random.nextInt(100);
+
+        if (currentChapter == 0) {
+            if (currentWave == 1) {
+                executeBasicEnemyStrike("punch", "Ο Τρελίτσας κουνάει τον κάβουρα με πανικό και σου κάνει ", bossWasDistracted);
+            } else {
+                if (roll < 40 && !bossWasDistracted) {
+                    playCardGlow(enemyCard, "#e67e22");
+                    playAttackLunge(enemyCard, false, () -> {
+                        playSound("punch");
+                        int effDef = getEffectiveHeroDefense();
+                        int hpBefore = hero.getCurrentHp();
+                        int specialDmg = (int) (enemy.getAttackPower() * 1.35);
+                        int actualDamage = Math.max(1, specialDmg - effDef);
+                        hero.takeDamage(specialDmg);
+
+                        playHitEffect(heroCard, "#e67e22");
+                        spawnFloatingText(195, 160, "ΚΟΥΤΟΥΛΙΑ -" + actualDamage + " HP!", "#e67e22");
+                        updateUI();
+                        battleLogLabel.setText("Ο Golfos ρίχνει Κουτουλιά Ευόσμου για " + actualDamage + " ζημιά!");
+                        finishEnemyTurn();
+                    });
+                } else {
+                    executeBasicEnemyStrike("punch", "Ο Golfos σου ρίχνει γροθιά για ", bossWasDistracted);
+                }
+            }
+            return;
+        }
 
         if (currentWave == 1 && maxWaves > 1) {
             executeBasicEnemyStrike("punch", "Τα τσιράκια του Douros σου ρίχνουν χτύπημα για ", bossWasDistracted);
@@ -1048,10 +1359,49 @@ public class BattleViewController {
         }
     }
 
+    private void playBackgroundMusic(String trackName) {
+        if (currentPlayingTrack.equals(trackName) && bgmPlayer != null && bgmPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
+            return;
+        }
+
+        try {
+            String[] extensions = {".mp3", ".wav"};
+            File musicFile = null;
+            for (String ext : extensions) {
+                File f = new File("src/sounds/" + trackName + ext);
+                if (f.exists()) {
+                    musicFile = f;
+                    break;
+                }
+            }
+
+            if (musicFile == null) return;
+
+            if (bgmPlayer != null) {
+                bgmPlayer.stop();
+                bgmPlayer.dispose();
+            }
+
+            Media media = new Media(musicFile.toURI().toString());
+            bgmPlayer = new MediaPlayer(media);
+            bgmPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+            bgmPlayer.setVolume(0.35);
+            bgmPlayer.play();
+            currentPlayingTrack = trackName;
+
+        } catch (Exception ignored) {
+        }
+    }
+
     private void updateSpecialButtonText() {
-        String skillName = (currentChapter == 3 && currentWave == 2) || (currentChapter == 5)
-                ? "ΗΡΩΙΚΗ ΕΦΟΔΟΣ"
-                : "ΣΚΟΤΕΙΝΗ ΕΝΕΔΡΑ";
+        String skillName;
+        if (currentChapter == 0) {
+            skillName = "ΡΟΠΑΛΙΑ ΜΠΕΪΖΜΠΟΛ";
+        } else if ((currentChapter == 3 && currentWave == 2) || (currentChapter == 5)) {
+            skillName = "ΗΡΩΙΚΗ ΕΦΟΔΟΣ";
+        } else {
+            skillName = "ΣΚΟΤΕΙΝΗ ΕΝΕΔΡΑ";
+        }
 
         if (specialCooldown > 0) {
             specialBtn.setText(skillName + " (" + specialCooldown + ")");
@@ -1064,12 +1414,14 @@ public class BattleViewController {
 
     private void updateSummonButtonState() {
         if (summonBtn == null) return;
-        String assistName = "kNotJohn";
-        if (summonCooldown > 0) {
-            summonBtn.setText(assistName + " (" + summonCooldown + ")");
+
+        String btnText = (currentChapter == 0) ? "Tung Tung [SLAM]" : "BACKUP ASSIST";
+
+        if (backupCooldown > 0) {
+            summonBtn.setText(btnText + " (" + backupCooldown + ")");
             summonBtn.setDisable(true);
         } else {
-            summonBtn.setText("ΚΛΗΣΗ " + assistName);
+            summonBtn.setText(btnText);
             if (isPlayerTurn) summonBtn.setDisable(false);
         }
     }
@@ -1079,6 +1431,8 @@ public class BattleViewController {
         if (!hero.isAlive()) {
             prepareChapterCharacters(currentChapter);
             setupArenaUI();
+        } else if (currentChapter == 0) {
+            startChapter(1);
         } else if (currentChapter < 5) {
             startChapter(currentChapter + 1);
         } else {
@@ -1233,11 +1587,15 @@ public class BattleViewController {
         heroNameLabel.setText(hero.getName() + " [" + hero.getCurrentHp() + "/" + hero.getMaxHp() + "]");
         enemyNameLabel.setText(enemy.getName() + " [" + enemy.getCurrentHp() + "/" + enemy.getMaxHp() + "]");
 
-        int heroDef = hero.getStatus() == StatusEffect.WOOD_ARMOR ? (int)(hero.getDefense() * 1.5) : hero.getDefense();
-        int heroAtk = hero.getStatus() == StatusEffect.DISTRACTED ? hero.getAttackPower() / 2 : hero.getAttackPower();
+        int effAtk = getEffectiveHeroAttack();
+        int effDef = getEffectiveHeroDefense();
 
-        String statusTag = hero.getStatus() != StatusEffect.NORMAL ? " • " + hero.getStatus() : "";
-        heroStatsLabel.setText("[ATK: " + heroAtk + " | DEF: " + heroDef + statusTag + "]");
+        StringBuilder heroTags = new StringBuilder();
+        if (hero.getStatus() != StatusEffect.NORMAL) heroTags.append(" • ").append(hero.getStatus());
+        if (rageBuffTurns > 0) heroTags.append(" • RAGE (").append(rageBuffTurns).append(")");
+        if (guardBuffTurns > 0) heroTags.append(" • GUARD (").append(guardBuffTurns).append(")");
+
+        heroStatsLabel.setText("[ATK: " + effAtk + " | DEF: " + effDef + heroTags + "]");
 
         int enemyAtk = enemy.getStatus() == StatusEffect.DISTRACTED ? enemy.getAttackPower() / 2 : enemy.getAttackPower();
         String enemyStatusTag = enemy.getStatus() != StatusEffect.NORMAL ? " • " + enemy.getStatus() : "";
@@ -1264,7 +1622,9 @@ public class BattleViewController {
     private String[] getCandidateFilenames(String key) {
         if (key == null) return new String[]{"nightgoon"};
         String k = key.toLowerCase().trim();
-        if (k.contains("chloe")) return new String[]{"chloe", "sunday"};
+        if (k.contains("golfos")) return new String[]{"golfos", "trelitsas"};
+        if (k.contains("trelitsas")) return new String[]{"trelitsas"};
+        if (k.contains("chloe") || k.contains("rafailia")) return new String[]{"rafailia", "chloe", "sunday"};
         if (k.contains("minion")) return new String[]{"minions", "douros"};
         if (k.contains("saver") || k.contains("save_a_hoe")) return new String[]{"captain_saver", "captain_save_a_hoe", "saver", "mrgoun"};
         if (k.contains("goun") || k.contains("mr")) return new String[]{"mrgoun", "mr_goun", "goun"};
