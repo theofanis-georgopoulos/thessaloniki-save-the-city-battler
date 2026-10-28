@@ -3,6 +3,7 @@ package controller;
 import game.model.Character;
 import game.model.*;
 import javafx.animation.*;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -20,6 +21,8 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
 import java.io.File;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,8 +32,8 @@ import java.util.Random;
 @SuppressWarnings({"SpellCheckingInspection", "unused"})
 public class BattleViewController {
 
-    @FXML private Pane effectsPane; // Layer για Floating Texts & Pop-ups
-    @FXML private StackPane battleRoot; // Το κεντρικό container της μάχης
+    @FXML private Pane effectsPane;
+    @FXML private StackPane battleRoot;
 
     @FXML private VBox heroCard;
     @FXML private VBox enemyCard;
@@ -38,7 +41,6 @@ public class BattleViewController {
 
     @FXML private StackPane mainMenuOverlay;
 
-    // Hades-Style Cutscene & Choice Elements
     @FXML private StackPane cutsceneOverlay;
     @FXML private Label cutsceneTitleLabel;
     @FXML private Label cutsceneSpeakerLabel;
@@ -72,7 +74,7 @@ public class BattleViewController {
     @FXML private Button attackBtn;
     @FXML private Button specialBtn;
     @FXML private Button defendBtn;
-    @FXML private Button summonBtn; // Το Backup κουμπί
+    @FXML private Button summonBtn;
     @FXML private Button nextBattleBtn;
 
     private Character hero;
@@ -83,20 +85,16 @@ public class BattleViewController {
     private int specialCooldown = 0;
     private int backupCooldown = 0;
 
-    // Buff trackers διάρκειας γύρων
     private int rageBuffTurns = 0;
     private int guardBuffTurns = 0;
 
-    // 0 έως 5 (Το 0 περιλαμβάνει Τρελίτσα Wave 1 και Golfos Secret Boss Wave 2)
     private int currentChapter = 0;
     private int hopeScore = 0;
     private boolean showingPostFightEpilogue = false;
 
-    // Wave / Minion Gauntlet Σύστημα
     private int currentWave = 1;
     private int maxWaves = 2;
 
-    // Dialogue Buffs
     private int bonusAtk = 0;
     private int bonusDef = 0;
     private boolean startWithArmor = false;
@@ -104,7 +102,6 @@ public class BattleViewController {
     private ScaleTransition pulseBtnAnim;
     private final Map<String, AudioClip> soundCache = new HashMap<>();
 
-    // Background Music (BGM) Engine
     private MediaPlayer bgmPlayer;
     private String currentPlayingTrack = "";
 
@@ -787,6 +784,10 @@ public class BattleViewController {
     }
 
     private void setupArenaUI() {
+        if (effectsPane != null) {
+            effectsPane.setMouseTransparent(true);
+        }
+
         isPlayerTurn = true;
         specialCooldown = 0;
         backupCooldown = 0;
@@ -799,8 +800,7 @@ public class BattleViewController {
 
         stageLabel.setText("CHAPTER " + currentChapter + " • WAVE " + currentWave + "/" + maxWaves);
 
-        // Dynamic Chapter Background apply
-        applyDynamicBackground();
+        Platform.runLater(this::applyDynamicBackground);
 
         heroHpBar.setProgress(1.0);
         enemyHpBar.setProgress(1.0);
@@ -834,19 +834,29 @@ public class BattleViewController {
         battleLogLabel.setText("CHAPTER " + currentChapter + " (WAVE " + currentWave + "/" + maxWaves + "): " + enemy.getName() + "!");
     }
 
-    // =========================================================================
-    // ΑΣΦΑΛΗΣ & ΔΥΝΑΜΙΚΗ ΦΟΡΤΩΣΗ BACKGROUND (ΑΝΑ ΚΕΦΑΛΑΙΟ)
-    // =========================================================================
     private void applyDynamicBackground() {
         try {
             String bgName = "chapter" + currentChapter + "_bg";
-            File file = new File("src/images/" + bgName + ".png");
-            if (!file.exists()) {
-                file = new File("src/images/" + bgName + ".jpg");
+            String[] extensions = {".png", ".jpg"};
+            Image bgImage = null;
+
+            for (String ext : extensions) {
+                String path = "/images/" + bgName + ext;
+                try (InputStream is = getClass().getResourceAsStream(path)) {
+                    if (is != null) {
+                        bgImage = new Image(is);
+                        break;
+                    }
+                } catch (Exception ignored) {}
+
+                File file = new File("src/images/" + bgName + ext);
+                if (file.exists()) {
+                    bgImage = new Image(file.toURI().toString());
+                    break;
+                }
             }
 
-            if (file.exists()) {
-                Image bgImage = new Image(file.toURI().toString());
+            if (bgImage != null) {
                 BackgroundImage backImg = new BackgroundImage(
                         bgImage,
                         BackgroundRepeat.NO_REPEAT,
@@ -856,17 +866,20 @@ public class BattleViewController {
                 );
                 Background background = new Background(backImg);
 
-                // 1. Εφαρμογή στο battleRoot αν υπάρχει
                 if (battleRoot != null) {
                     battleRoot.setBackground(background);
                 }
 
-                // 2. Εφαρμογή απευθείας στο root της σκηνής (σίγουρη λύση)
                 if (heroCard != null && heroCard.getScene() != null && heroCard.getScene().getRoot() instanceof Region) {
                     ((Region) heroCard.getScene().getRoot()).setBackground(background);
                 }
+            } else if (battleRoot != null) {
+                battleRoot.setStyle("-fx-background-color: linear-gradient(to bottom, #111424, #050508);");
             }
         } catch (Exception ignored) {
+            if (battleRoot != null) {
+                battleRoot.setStyle("-fx-background-color: linear-gradient(to bottom, #111424, #050508);");
+            }
         }
     }
 
@@ -978,29 +991,21 @@ public class BattleViewController {
         if (guardBuffTurns > 0) guardBuffTurns--;
     }
 
-    // =========================================================================
-    // FOCUS & CLICK-THROUGH SHIELD FIX ΓΙΑ ΤΟ BACKUP POP-UP (ΚΛΕΙΔΩΜΑ CLICK)
-    // =========================================================================
     @FXML
     private void handleSummonAssist() {
         if (!isPlayerTurn || backupCooldown > 0) return;
 
-        // Στο Chapter 0 ο παίκτης ελέγχει kNotJohn, άρα το Backup καλεί Tung Tung άμεσα
         if (currentChapter == 0) {
             executeTungTungAssist();
             return;
         }
 
-        // Στα υπόλοιπα chapters εμφανίζεται η ασφαλής Selection Shield
         showRookieSelectionOverlay();
     }
-
-
 
     private void showRookieSelectionOverlay() {
         if (effectsPane == null) return;
 
-        // Ενεργοποίηση κλικ για να πατηθεί το popup
         effectsPane.setMouseTransparent(false);
         effectsPane.toFront();
 
@@ -1037,7 +1042,6 @@ public class BattleViewController {
 
         setButtonsEnabled(false);
 
-        // Στο κλικ κλείνουμε το popup και ΞΕΚΛΕΙΔΩΝΟΥΜΕ τα πίσω κουμπιά κάνοντας mouseTransparent = true
         btnJohn.setOnMouseClicked(event -> {
             effectsPane.getChildren().remove(popup);
             effectsPane.setMouseTransparent(true);
@@ -1059,6 +1063,7 @@ public class BattleViewController {
         effectsPane.getChildren().add(popup);
         popup.toFront();
     }
+
     private void executeKnotJohnAssist() {
         isPlayerTurn = false;
         backupCooldown = 3;
@@ -1070,7 +1075,7 @@ public class BattleViewController {
 
         playAssistPopupAnimation("kNotJohn", "BAT STUN & DEFENSE GUARD", "#a6e22e", "knotjohn", () -> {
             hero.heal(30);
-            guardBuffTurns = 2; // +4 Defense για 2 γύρους
+            guardBuffTurns = 2;
             spawnFloatingText(195, 130, "+30 HP & GUARD!", "#2ecc71");
 
             int hpBefore = enemy.getCurrentHp();
@@ -1098,7 +1103,7 @@ public class BattleViewController {
         playCardGlow(heroCard, "#2ecc71");
 
         playAssistPopupAnimation("Tung Tung", "BRAWLER SLAM & STREET RAGE", "#2ecc71", "tung_tung", () -> {
-            rageBuffTurns = 2; // +8 Attack για 2 γύρους
+            rageBuffTurns = 2;
             spawnFloatingText(195, 130, "STREET RAGE! (+8 ATK)", "#f39c12");
 
             int hpBefore = enemy.getCurrentHp();
@@ -1329,6 +1334,10 @@ public class BattleViewController {
             return;
         }
 
+        if (effectsPane != null) {
+            effectsPane.setMouseTransparent(true);
+        }
+
         isPlayerTurn = true;
         setButtonsEnabled(true);
         updateSpecialButtonText();
@@ -1345,8 +1354,18 @@ public class BattleViewController {
                 soundCache.get(soundName).play();
                 return;
             }
+
             String[] extensions = {".wav", ".mp3"};
             for (String ext : extensions) {
+                String path = "/sounds/" + soundName + ext;
+                URL url = getClass().getResource(path);
+                if (url != null) {
+                    AudioClip clip = new AudioClip(url.toExternalForm());
+                    soundCache.put(soundName, clip);
+                    clip.play();
+                    return;
+                }
+
                 File soundFile = new File("src/sounds/" + soundName + ext);
                 if (soundFile.exists()) {
                     AudioClip clip = new AudioClip(soundFile.toURI().toString());
@@ -1355,8 +1374,7 @@ public class BattleViewController {
                     return;
                 }
             }
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
     }
 
     private void playBackgroundMusic(String trackName) {
@@ -1366,31 +1384,38 @@ public class BattleViewController {
 
         try {
             String[] extensions = {".mp3", ".wav"};
-            File musicFile = null;
+            String mediaUri = null;
+
             for (String ext : extensions) {
+                String path = "/sounds/" + trackName + ext;
+                URL res = getClass().getResource(path);
+                if (res != null) {
+                    mediaUri = res.toExternalForm();
+                    break;
+                }
+
                 File f = new File("src/sounds/" + trackName + ext);
                 if (f.exists()) {
-                    musicFile = f;
+                    mediaUri = f.toURI().toString();
                     break;
                 }
             }
 
-            if (musicFile == null) return;
+            if (mediaUri == null) return;
 
             if (bgmPlayer != null) {
                 bgmPlayer.stop();
                 bgmPlayer.dispose();
             }
 
-            Media media = new Media(musicFile.toURI().toString());
+            Media media = new Media(mediaUri);
             bgmPlayer = new MediaPlayer(media);
             bgmPlayer.setCycleCount(MediaPlayer.INDEFINITE);
             bgmPlayer.setVolume(0.35);
             bgmPlayer.play();
             currentPlayingTrack = trackName;
 
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
     }
 
     private void updateSpecialButtonText() {
@@ -1606,15 +1631,26 @@ public class BattleViewController {
     }
 
     private void loadCharacterImage(ImageView imageView, String key) {
+        if (imageView == null) return;
         String[] candidates = getCandidateFilenames(key);
+        String[] extensions = {".png", ".jpg"};
+
         for (String name : candidates) {
-            File file = new File("src/images/" + name + ".png");
-            if (!file.exists()) {
-                file = new File("src/images/" + name + ".jpg");
-            }
-            if (file.exists()) {
-                imageView.setImage(new Image(file.toURI().toString()));
-                return;
+            for (String ext : extensions) {
+                String path = "/images/" + name + ext;
+
+                try (InputStream is = getClass().getResourceAsStream(path)) {
+                    if (is != null) {
+                        imageView.setImage(new Image(is));
+                        return;
+                    }
+                } catch (Exception ignored) {}
+
+                File f = new File("src/images/" + name + ext);
+                if (f.exists()) {
+                    imageView.setImage(new Image(f.toURI().toString()));
+                    return;
+                }
             }
         }
     }
