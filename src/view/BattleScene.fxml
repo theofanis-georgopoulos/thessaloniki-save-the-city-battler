@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="750.0" prefWidth="1100.0" style="-fx-background-color: #0f0c29; -fx-background-image: url('@../images/thessaloniki_bg.png'); -fx-background-size: cover; -fx-background-position: center;" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.BattleViewController">
+    <children>
+        <!-- Main Game Arena Layout -->
+        <VBox alignment="TOP_CENTER" spacing="15.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <padding>
+                <javafx.geometry.Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+            <children>
+                <!-- Top Control / Status Bar -->
+                <HBox alignment="CENTER" spacing="25.0" style="-fx-background-color: rgba(20, 20, 35, 0.88); -fx-background-radius: 10; -fx-padding: 10 20 10 20;">
+                    <children>
+                        <Button onAction="#openMainMenu" style="-fx-background-color: #33334d; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="ΜΕΝΟΥ" />
+                        <Label fx:id="stageLabel" style="-fx-text-fill: #f5af19; -fx-font-weight: bold; -fx-font-size: 16px;" text="CHAPTER 1 / 5" />
+                        <Label fx:id="moralityLabel" style="-fx-text-fill: #00d2ff; -fx-font-weight: bold; -fx-font-size: 14px;" text="MORAL COMPASS: BALANCED" />
+                    </children>
+                </HBox>
+
+                <!-- Arena Cards & VS Layout -->
+                <HBox alignment="CENTER" spacing="40.0">
+                    <children>
+                        <!-- Hero Card -->
+                        <VBox fx:id="heroCard" alignment="TOP_CENTER" maxHeight="420.0" prefWidth="300.0" spacing="8.0" style="-fx-background-color: rgba(18, 18, 30, 0.92); -fx-background-radius: 15; -fx-border-color: #00d2ff; -fx-border-radius: 15; -fx-border-width: 2.5; -fx-padding: 15;">
+                            <children>
+                                <Label fx:id="heroNameLabel" style="-fx-text-fill: #00d2ff; -fx-font-weight: bold; -fx-font-size: 18px;" text="Nightgoon" />
+                                <ProgressBar fx:id="heroHpBar" prefWidth="260.0" progress="1.0" style="-fx-accent: #2ecc71;" />
+                                <StackPane prefHeight="240.0" prefWidth="260.0" style="-fx-background-color: #0b0b14; -fx-background-radius: 10;">
+                                    <children>
+                                        <ImageView fx:id="heroImageView" fitHeight="230.0" fitWidth="260.0" preserveRatio="true" />
+                                    </children>
+                                </StackPane>
+                                <Label fx:id="heroStatsLabel" style="-fx-text-fill: #b0c4de; -fx-font-size: 13px;" text="[ATK: 25 | DEF: 10]" />
+                            </children>
+                        </VBox>
+
+                        <!-- VS Badge -->
+                        <StackPane fx:id="vsBadge" prefHeight="70.0" prefWidth="70.0">
+                            <children>
+                                <Label style="-fx-text-fill: #ff5252; -fx-font-size: 32px; -fx-font-weight: bold; -fx-font-family: 'Impact';" text="VS" />
+                            </children>
+                        </StackPane>
+
+                        <!-- Enemy Card -->
+                        <VBox fx:id="enemyCard" alignment="TOP_CENTER" maxHeight="420.0" prefWidth="300.0" spacing="8.0" style="-fx-background-color: rgba(18, 18, 30, 0.92); -fx-background-radius: 15; -fx-border-color: #ff5252; -fx-border-radius: 15; -fx-border-width: 2.5; -fx-padding: 15;">
+                            <children>
+                                <Label fx:id="enemyNameLabel" style="-fx-text-fill: #ff5252; -fx-font-weight: bold; -fx-font-size: 18px;" text="Doctor Douros" />
+                                <ProgressBar fx:id="enemyHpBar" prefWidth="260.0" progress="1.0" style="-fx-accent: #e74c3c;" />
+                                <StackPane prefHeight="240.0" prefWidth="260.0" style="-fx-background-color: #0b0b14; -fx-background-radius: 10;">
+                                    <children>
+                                        <ImageView fx:id="enemyImageView" fitHeight="230.0" fitWidth="260.0" preserveRatio="true" />
+                                    </children>
+                                </StackPane>
+                                <Label fx:id="enemyStatsLabel" style="-fx-text-fill: #b0c4de; -fx-font-size: 13px;" text="[ATK: 22 | DEF: 8]" />
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+
+                <!-- Battle Log / Messages -->
+                <Label fx:id="battleLogLabel" alignment="CENTER" prefHeight="35.0" prefWidth="950.0" style="-fx-text-fill: #f1c40f; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: rgba(15,15,25,0.85); -fx-background-radius: 6;" text="Η μάχη ξεκινάει..." />
+
+                <!-- Bottom Action Controls -->
+                <HBox alignment="CENTER" spacing="15.0">
+                    <children>
+                        <Button fx:id="attackBtn" onAction="#handleBasicAttack" prefHeight="48.0" prefWidth="145.0" style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;" text="ΕΠΙΘΕΣΗ" />
+                        <Button fx:id="specialBtn" onAction="#handleSpecialSkill" prefHeight="48.0" prefWidth="165.0" style="-fx-background-color: #8e44ad; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;" text="SPECIAL SKILL" />
+                        <Button fx:id="defendBtn" onAction="#handleDefend" prefHeight="48.0" prefWidth="145.0" style="-fx-background-color: #2980b9; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;" text="ΑΜΥΝΑ" />
+                        <Button fx:id="summonBtn" onAction="#handleSummonAssist" prefHeight="48.0" prefWidth="165.0" style="-fx-background-color: #d35400; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;" text="ΚΛΗΣΗ ASSIST" />
+                        <Button fx:id="nextBattleBtn" onAction="#handleNextOrRetryBattle" prefHeight="48.0" prefWidth="185.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;" text="ΕΠΟΜΕΝΟ" visible="false" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+
+        <!-- FX Floating Effects Pane -->
+        <Pane fx:id="effectsPane" mouseTransparent="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+
+        <!-- ========================================================================= -->
+        <!-- OVERLAY 1: MAIN MENU (CAMPAIGN START)                                     -->
+        <!-- ========================================================================= -->
+        <StackPane fx:id="mainMenuOverlay" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" style="-fx-background-color: rgba(10, 8, 20, 0.95);" visible="true">
+            <children>
+                <VBox alignment="CENTER" maxHeight="480.0" maxWidth="680.0" spacing="20.0" style="-fx-background-color: #151528; -fx-background-radius: 20; -fx-border-color: #f5af19; -fx-border-radius: 20; -fx-border-width: 3; -fx-padding: 35;">
+                    <effect>
+                        <DropShadow color="#000000" radius="40.0" spread="0.6" />
+                    </effect>
+                    <children>
+                        <Label style="-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #f5af19; -fx-font-family: 'Impact';" text="CITY OF THE GREEK DREAM" />
+                        <Label style="-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #ff5252;" text="THE PREQUEL — INTERACTIVE HADES EDITION" />
+
+                        <Label alignment="CENTER" prefWidth="580.0" style="-fx-text-fill: #dcdde1; -fx-font-size: 14px;" text="Ζήσε τα 5 Κεφάλαια της πτώσης και της ελπίδας στη Θεσσαλονίκη. Πάρε ηθικές αποφάσεις στους διαλόγους, αντιμετώπισε τον Doctor Douros, τη Stazzie και τη Sunday, και καθόρισε το πεπρωμένο του Nightgoon!" textAlignment="CENTER" wrapText="true" />
+
+                        <Pane prefHeight="10.0" />
+
+                        <Button onAction="#startCampaignFromMenu" prefHeight="65.0" prefWidth="320.0" style="-fx-background-color: linear-gradient(to bottom, #f5af19, #e67e22); -fx-text-fill: #0f0c29; -fx-font-size: 17px; -fx-font-weight: bold; -fx-background-radius: 12; -fx-border-color: #ffe082; -fx-border-radius: 12; -fx-border-width: 2; -fx-cursor: hand;" text="⚔ ΕΝΑΡΞΗ ΙΣΤΟΡΙΑΣ (CHAPTER 1)" />
+                    </children>
+                </VBox>
+            </children>
+        </StackPane>
+
+        <!-- ========================================================================= -->
+        <!-- OVERLAY 2: HADES-STYLE DIALOGUE & INTERACTIVE CHOICES SYSTEM              -->
+        <!-- ========================================================================= -->
+        <StackPane fx:id="cutsceneOverlay" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" style="-fx-background-color: rgba(5, 5, 14, 0.86);" visible="false">
+            <children>
+                <VBox alignment="BOTTOM_CENTER" maxWidth="960.0" spacing="0.0">
+                    <padding>
+                        <javafx.geometry.Insets bottom="30.0" left="30.0" right="30.0" top="20.0" />
+                    </padding>
+                    <children>
+                        <!-- Πάνω σειρά: Τίτλος Κεφαλαίου -->
+                        <HBox alignment="CENTER" style="-fx-padding: 0 0 12 0;">
+                            <children>
+                                <Label fx:id="cutsceneTitleLabel" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #f5af19; -fx-background-color: rgba(15, 15, 28, 0.95); -fx-padding: 6 20 6 20; -fx-background-radius: 20; -fx-border-color: #f5af19; -fx-border-radius: 20; -fx-border-width: 1.5;" text="CHAPTER 1: ROCK BOTTOM AND THE HAND OF HOPE" />
+                            </children>
+                        </HBox>
+
+                        <!-- Πορτρέτο Χαρακτήρα (Αριστερά ή Δεξιά αλά Hades) -->
+                        <HBox fx:id="portraitContainer" alignment="BOTTOM_LEFT" style="-fx-padding: 0 25 -6 25;">
+                            <children>
+                                <StackPane fx:id="portraitFrame" prefHeight="250.0" prefWidth="230.0" style="-fx-background-color: #10101e; -fx-background-radius: 16 16 0 0; -fx-border-color: #f5af19; -fx-border-width: 3 3 0 3; -fx-border-radius: 16 16 0 0;">
+                                    <effect>
+                                        <DropShadow color="#000000" radius="25.0" spread="0.4" />
+                                    </effect>
+                                    <children>
+                                        <ImageView fx:id="cutscenePortraitImageView" fitHeight="240.0" fitWidth="215.0" preserveRatio="true" />
+                                    </children>
+                                </StackPane>
+                            </children>
+                        </HBox>
+
+                        <!-- Κουτί Διαλόγου Hades -->
+                        <VBox fx:id="dialogueBoxFrame" prefHeight="225.0" prefWidth="900.0" spacing="10.0" style="-fx-background-color: linear-gradient(to bottom, #16162a, #0b0b16); -fx-background-radius: 14; -fx-border-color: #f5af19; -fx-border-radius: 14; -fx-border-width: 3; -fx-padding: 20 28 20 28;">
+                            <effect>
+                                <DropShadow color="#000000" radius="35.0" spread="0.6" />
+                            </effect>
+                            <children>
+                                <!-- Όνομα & Τίτλος Ομιλητή -->
+                                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                    <children>
+                                        <Label fx:id="cutsceneSpeakerLabel" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #f5af19; -fx-font-family: 'Impact';" text="NIGHTGOON" />
+                                        <Label fx:id="cutsceneSubtitleLabel" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #95a5a6; -fx-padding: 4 0 0 0;" text="• ROCK BOTTOM" />
+                                    </children>
+                                </HBox>
+
+                                <Separator opacity="0.25" prefWidth="200.0" />
+
+                                <!-- Κείμενο Ατάκας -->
+                                <Label fx:id="cutsceneTextLabel" alignment="TOP_LEFT" prefHeight="75.0" prefWidth="840.0" style="-fx-font-size: 16px; -fx-text-fill: #f5f6fa; -fx-font-style: italic;" text="«Κείμενο διαλόγου...»" wrapText="true" />
+
+                                <!-- Κουμπιά Διαδραστικών Επιλογών (Interactive Choices αλά Hades) -->
+                                <HBox fx:id="choiceButtonsBox" alignment="CENTER" spacing="15.0" visible="false" managed="false">
+                                    <children>
+                                        <Button fx:id="choiceBtn1" onAction="#handleChoice1" prefHeight="40.0" style="-fx-background-color: #1e272e; -fx-text-fill: #00d2ff; -fx-font-size: 13px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-border-color: #00d2ff; -fx-border-radius: 8; -fx-border-width: 1.5; -fx-padding: 0 16 0 16; -fx-cursor: hand;" text="Επιλογή 1" />
+                                        <Button fx:id="choiceBtn2" onAction="#handleChoice2" prefHeight="40.0" style="-fx-background-color: #1e272e; -fx-text-fill: #f5af19; -fx-font-size: 13px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-border-color: #f5af19; -fx-border-radius: 8; -fx-border-width: 1.5; -fx-padding: 0 16 0 16; -fx-cursor: hand;" text="Επιλογή 2" />
+                                        <Button fx:id="choiceBtn3" onAction="#handleChoice3" prefHeight="40.0" style="-fx-background-color: #1e272e; -fx-text-fill: #ff5252; -fx-font-size: 13px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-border-color: #ff5252; -fx-border-radius: 8; -fx-border-width: 1.5; -fx-padding: 0 16 0 16; -fx-cursor: hand;" text="Επιλογή 3" />
+                                    </children>
+                                </HBox>
+
+                                <!-- Κλασικά Κουμπιά Skip & Επόμενη Ατάκα -->
+                                <HBox fx:id="standardNavBox" alignment="CENTER_RIGHT" spacing="15.0">
+                                    <children>
+                                        <Button onAction="#skipCutsceneToFight" prefHeight="38.0" prefWidth="150.0" style="-fx-background-color: #2f3640; -fx-text-fill: #dcdde1; -fx-font-size: 12px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;" text="ΠΑΡΑΛΕΙΨΗ (SKIP)" />
+                                        <Button fx:id="cutsceneNextBtn" onAction="#handleNextDialogueLine" prefHeight="40.0" prefWidth="220.0" style="-fx-background-color: linear-gradient(to bottom, #f5af19, #e67e22); -fx-text-fill: #0f0c29; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-border-color: #ffe082; -fx-border-radius: 8; -fx-border-width: 1.5; -fx-cursor: hand;" text="ΣΥΝΕΧΕΙΑ ➔" />
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+            </children>
+        </StackPane>
+    </children>
+</AnchorPane>
