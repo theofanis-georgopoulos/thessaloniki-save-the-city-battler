@@ -26,7 +26,7 @@ public class Main extends Application {
             // 2. Κάνουμε το παράθυρο να ανοίγει αυτόματα σε Fullscreen (ή μεγιστοποιημένο)
             primaryStage.setTitle("City of the Greek Dream: The Prequel - Battle");
             primaryStage.setScene(new Scene(root));
-            primaryStage.setMaximized(true);
+            primaryStage.setMaximized(false);
 
             primaryStage.setResizable(true);
             primaryStage.show();

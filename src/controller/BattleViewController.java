@@ -141,8 +141,8 @@ public class BattleViewController {
 
         @Override
         public void takeDamage(int damage) {
-            int effDef = (getStatus() == StatusEffect.WOOD_ARMOR) ? (int)(customDef * 1.5) : customDef;
-            int actual = Math.max(1, damage - effDef);
+            int effDef = (getStatus() == StatusEffect.WOOD_ARMOR) ? (int)(customDef * 1.35) : customDef;
+            int actual = Math.max(2, damage - effDef);
             customCurrentHp = Math.max(0, customCurrentHp - actual);
         }
 
@@ -249,7 +249,7 @@ public class BattleViewController {
         String heroDisplayName;
 
         if (chapter == 0) {
-            baseHero = new StageFighter("kNotJohn", 110, 22, 6);
+            baseHero = new StageFighter("kNotJohn", 100, 20, 5);
             heroDisplayName = "kNotJohn";
         } else if (chapter == 3 && currentWave == 2) {
             baseHero = new MrGoun();
@@ -275,23 +275,23 @@ public class BattleViewController {
 
         if (chapter == 0) {
             if (currentWave == 1) {
-                enemy = new StageFighter("Trelitsas", 65, 9, 2);
+                enemy = new StageFighter("Trelitsas", 85, 13, 3);
             } else {
-                enemy = new StageFighter("Golfos", 95, 15, 5);
+                enemy = new StageFighter("Golfos", 135, 21, 6);
             }
         } else if (currentWave == 1 && maxWaves > 1) {
-            int minionHp = (chapter == 2) ? 75 : (chapter == 3 ? 85 : 95);
-            int minionAtk = (chapter == 2) ? 14 : 16;
-            enemy = new StageFighter("Douros's Minions", minionHp, minionAtk, 5);
+            int minionHp = (chapter == 2) ? 115 : (chapter == 3 ? 120 : 125);
+            int minionAtk = (chapter == 2) ? 20 : 22;
+            enemy = new StageFighter("Douros's Minions", minionHp, minionAtk, 6);
         } else {
             if (chapter == 2) {
-                enemy = new StageFighter("Minion Leader", 105, 18, 7);
+                enemy = new StageFighter("Minion Leader", 150, 24, 8);
             } else if (chapter == 3) {
-                enemy = new StageFighter("Stazie", 120, 20, 8);
+                enemy = new StageFighter("Stazie", 175, 26, 10);
             } else if (chapter == 4) {
-                enemy = new BossDouros();
+                enemy = new StageFighter("Boss Douros", 220, 28, 12);
             } else {
-                enemy = new BossSunday();
+                enemy = new StageFighter("Boss Sunday", 260, 30, 14);
             }
         }
     }
@@ -300,24 +300,24 @@ public class BattleViewController {
         activeDialogueQueue.clear();
         currentDialogueIndex = 0;
 
-        cutsceneTitleLabel.setText("SECRET ENCOUNTER: Ο GOLFOS ΖΗΤΑΕΙ ΤΑ ΡΕΣΤΑ!");
+        cutsceneTitleLabel.setText(" Ο GOLFOS ΖΗΤΑΕΙ ΤΑ ΡΕΣΤΑ!");
 
         activeDialogueQueue.add(new DialogueLine(
-                "GOLFOS", "• Ο ΚΟΛΛΗΤΟΣ ΑΠΟ ΤΟΝ ΕΥΟΣΜΟ",
+                "GOLFOS", "• Ο ΚΟΛΛΗΤΟΣ ΤΟΥ ΤΡΕΛΙΤΣΑ",
                 "«Ποιος τόλμησε να αγγίξει τον Τρελίτσα ρε; Μάγκα με το ρόπαλο, νομίζεις ότι στον Εύοσμο είμαστε κορόιδα;»",
                 "golfos", "#e67e22", true
         ).withChoices(
-                new String[]{"🏏 «Έλα κι εσύ να φας τις ροπαλιές σου!» (+ATK)", "🕶️ «Χαλάρωσε δικέ μου, πάρτε ταξί για δυτικά.» (+DEF)"},
+                new String[]{"🏏 «Έλα κι εσύ να φας τις ροπαλιές σου!» (+ATK)", "🕶️ «Χαλάρωσε φιλαράκο.» (+DEF)"},
                 new String[]{
-                        "kNotJohn: «Όποιος έρχεται από τον Εύοσμο με τουπέ, φεύγει με καρούμπαλο!» (+5 Attack)",
-                        "kNotJohn: «Κοίτα να πάρεις το φιλαράκι σου και να εξαφανιστείτε πριν νευριάσω.» (+4 Defense)"
+                        "kNotJohn: «Όποιος έρχεται από τον Εύοσμο με τουπέ, φεύγει με καρούμπαλα!» (+4 Attack)",
+                        "kNotJohn: «Κοίτα να πάρεις το φιλαράκι σου και να εξαφανιστείτε πριν νευριάσω.» (+3 Defense)"
                 },
                 new int[]{1, 1}
         ));
 
         activeDialogueQueue.add(new DialogueLine(
                 "TUNG TUNG", "• Ο BRAWLER ΤΗΣ ΟΜΑΔΑΣ",
-                "«kNotJohn! Είμαι πίσω σου! Κάλεσέ με με το κουμπί Backup να του σπάσω τα μούτρα!»",
+                "«kNotJohn! Πρόσεξε, αυτός βαράει βαριά! Κάλεσέ με όταν χρειαστείς να του σπάσουμε την άμυνα!»",
                 "tung_tung", "#2ecc71", false
         ));
 
@@ -334,19 +334,19 @@ public class BattleViewController {
 
             activeDialogueQueue.add(new DialogueLine(
                     "kNotJohn", "• ROOKIE ME TO ΡΟΠΑΛΟ",
-                    "«Gotcha! Man, έχω δει βρεγμένο χαρτόκουτο να προβάλλει μεγαλύτερη αντίσταση από εσένα, 'boss'!»",
+                    "«Έχω δει βρεγμένο χαρτόκουτο να προβάλλει μεγαλύτερη αντίσταση από εσένα!»",
                     "knotjohn", "#a6e22e", false
             ));
 
             activeDialogueQueue.add(new DialogueLine(
                     "TRELITSAS", "• THE PATHETIC (TUTORIAL BOSS)",
-                    "«OOF! Πρόσεχε την πανοπλία! Δεν είναι φτιαγμένη για wrestling! Και... ο Εύοσμος έχει μεγάλο street cred!»",
+                    "«OOF! Πρόσεχε την πανοπλία μου δεν αντέχει πολλά-πολλά!»",
                     "trelitsas", "#e74c3c", true
             ).withChoices(
-                    new String[]{"🏏 «Γύρνα στον Εύοσμο!» (+ATK)", "😂 «Πες τα στον φίλο σου τον Golfos!» (+DEF)"},
+                    new String[]{" «Γύρνα στον Εύοσμο!» (+ATK)", " «Πες τα στον φίλο σου τον Golfo αυτά!» (+DEF)"},
                     new String[]{
-                            "kNotJohn: «Άσε το παραμύθι. Γύρνα πίσω στον Εύοσμο εκεί που ανήκεις!» (+5 Attack)",
-                            "kNotJohn: «Πήγαινε στον κολλητό σου τον Golfos και πες του ότι σε έδειρε ένας τύπος με ρόπαλο του μπέιζμπολ!» (+4 Defense)"
+                            "kNotJohn: «Άσε το παραμύθι. Γύρνα πίσω στον Εύοσμο εκεί που ανήκεις!» (+4 Attack)",
+                            "kNotJohn: «Πήγαινε στον κολλητό σου τον Golfos και πες του ότι σε έδειρε ένας τύπος με ρόπαλο του μπέιζμπολ!» (+3 Defense)"
                     },
                     new int[]{1, 1}
             ));
@@ -359,7 +359,7 @@ public class BattleViewController {
 
             activeDialogueQueue.add(new DialogueLine(
                     "TUNG TUNG", "• BRAWLER BACKUP",
-                    "«kNotJohn, πάτα το κουμπί Backup όποτε θες για Heavy Slam!»",
+                    "«kNotJohn, φύλαξε το Backup για τη σωστή στιγμή, μην το σπαταλάς!»",
                     "tung_tung", "#2ecc71", false
             ));
 
@@ -367,164 +367,164 @@ public class BattleViewController {
             cutsceneTitleLabel.setText("CHAPTER 1: Ο ΠΑΤΟΣ ΚΑΙ Η ΜΑΣΚΑ");
 
             activeDialogueQueue.add(new DialogueLine(
-                    "NIGHTGOON", "• Ο ΠΑΤΟΣ",
-                    "«Απόλυση το πρωί, έξωση το βράδυ. Η Θεσσαλονίκη σε ξερνάει έξω στο κρύο χωρίς δεύτερη σκέψη.»",
+                    "NIGHTGOON", "• ΤΟ ΑΠΟΛΥΤΟ ΜΗΔΕΝ",
+                    "«Το πρωί με απολύουν και τώρα μου κάνουν έξωση από το σπίτι μου. Αυτή η μέρα δεν μπορεί να γίνει χειρότερη!»",
                     "nightgoon", "#7f8fa6", false
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "RAFAILIA", "• Η ΠΡΩΗΝ",
-                    "«Κοίτα τα χάλια σου! Χωρίς φράγκα, χωρίς δουλειά, ένας σκέτος loser. Άσε με ησυχία, τελειώσαμε!»",
+                    "RAFAILIA", "• Η ΩΜΗ ΠΡΑΓΜΑΤΙΚΟΤΗΤΑ",
+                    "«Δεν αντέχω άλλο τα την μοιζέρια και τις δικαιολογίες σου. Φεύγω και σε παρατάω στην κατάντια σου!»",
                     "rafailia", "#f1c40f", true
             ).withChoices(
-                    new String[]{"😠 Τσακώσου μαζί της", "🌧️ Παρακάλεσέ την να μείνει", "🚶 Φύγε σιωπηλά στη βροχή"},
+                    new String[]{" «Δεν σε έχω ανάγκη. ΦΥΓΕ!!!»", "️ «Κάποτε πίστευες σε εμάς...»", " Φύγε σιωπηλά στη βροχή"},
                     new String[]{
-                            "«Φύγε λοιπόν, Rafailia! Όταν τα πράγματα δυσκολεύουν, κοιτάς μόνο τον εαυτό σου!» — Εκείνη γυρνάει την πλάτη.",
-                            "«Περίμενε, Rafailia...» — Εκείνη γελάει ειρωνικά και σε αφήνει μόνο στο βρεγμένο πεζοδρόμιο.",
-                            "Δεν λες λέξη. Σφίγγεις τις γροθιές σου και την κοιτάς να χάνεται στη βροχή."
+                            "«Φύγε λοιπόν, δεν σε χρειάζομαι!» — Εκείνη γυρνάει την πλάτη.",
+                            "«Κάποτε είχαμε όνειρα...» — «Τα όνειρα δεν πληρώνουν λογαριασμούς,» σου απαντά ψυχρά πριν φύγει.",
+                            "Δεν λες κουβέντα. Σφίγγεις τα δόντια και την αφήνεις να χαθεί στο βάθος του δρόμου."
                     },
                     new int[]{-1, 0, 1}
             ));
 
             activeDialogueQueue.add(new DialogueLine(
                     "CAPTAIN SAVER", "• Ο ΣΩΤΗΡΑΣ ΜΕ ΤΗΝ ΚΟΚΚΙΝΗ ΚΑΠΑ",
-                    "Μια φιγούρα με κόκκινη κάπα κατεβαίνει στο βρεγμένο στενό.\n«Η πόλη σε πέταξε στα σκουπίδια, μικρέ. Αλλά η δικαιοσύνη δεν πεθαίνει ποτέ. Πάρε αυτή τη μάσκα και δείξε τους ποιος είσαι!»",
+                    "Μια βαριά σκιά με κόκκινη κάπα προσγειώνεται στο βρεγμένο οδόστρωμα.\n«Η πόλη αυτή σε χρειάζεται μην πτοείσαι Nightgoon. Έλα μαζί μου.»",
                     "captain_saver", "#00d2ff", false
             ).withChoices(
-                    new String[]{"🤝 Πάρε το χέρι του Captain Saver (Hope)", "🔥 Δέξου τη μάσκα με οργή (Cynicism)"},
+                    new String[]{"🤝 Δέξου τη βοήθεια με πίστη (Hope +2)", "🔥 Δέξου τη βοήθεια για εκδίκηση (Cynicism -2)"},
                     new String[]{
-                            "Πιάνεις το χέρι του: «Η ιστορία μου δεν τελείωσε ακόμα, Captain Saver. Δείξε μου τον δρόμο.» (+Hope)",
-                            "Πιάνεις το χέρι του: «Θα φορέσω τη μάσκα, αλλά με τον δικό μου τρόπο.» (+Cynicism)"
+                            "«Δεν θα αφήσω την πόλη να με καταπιεί, Captain Saver. Θα την αλλάξουμε!» (+Hope)",
+                            "«Όποιος μου στάθηκε εμπόδιο θα πληρώσει ακριβά.» (+Cynicism)"
                     },
                     new int[]{2, -2}
             ));
 
         } else if (chapter == 2) {
-            cutsceneTitleLabel.setText("CHAPTER 2: Η ΠΕΡΙΠΟΛΙΑ");
+            cutsceneTitleLabel.setText("CHAPTER 2: Η ΠΕΡΙΠΟΛΙΑ ΣΤΑ ΣΤΕΝΑ");
 
             activeDialogueQueue.add(new DialogueLine(
                     "CAPTAIN SAVER", "• Ο ΜΕΝΤΟΡΑΣ",
-                    "«Η περιπολία ξεκινάει, Nightgoon. Δείξε αυτοσυγκράτηση. Οι δρόμοι θέλουν καρδιά, όχι μόνο γροθιές.»",
+                    "«Η περιπολία ξεκινάει, Nightgoon. Κράτα καθαρό μυαλό. Τα Minions του Douros κυκλοφορούν σε ομάδες και δεν διστάζουν να χτυπήσουν ύπουλα.»",
                     "captain_saver", "#00d2ff", false
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "MR. GOUN", "• Ο CULT ΔΙΚΟΣ ΜΑΣ ΑΝΘΡΩΠΟΣ",
-                    "«Πού πάτε ρε κομάντος μέσα στη νύχτα; Προσέξτε τα στενά, η πόλη απόψε βρωμάει μπαρούτι!»",
+                    "MR. GOUN", "• Ο ΦΥΛΑΚΑΣ",
+                    "«Έχω νέα από τα στενά του λιμανιού. Ο Douros μοίρασε όπλα και χημικά στα τσιράκια του. Αν μπλέξετε, μην διστάσετε να με καλέσετε!»",
                     "mrgoun", "#f5af19", true
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "kNotJohn & TUNG TUNG", "• ΟΙ ROOKIES ΣΤΗΝ ΠΡΩΤΗ ΓΡΑΜΜΗ",
-                    "«Nightgoon! Είμαστε έτοιμοι να σε στηρίξουμε! Πάτα το Backup και διάλεξε ποιον από τους δυο μας χρειάζεσαι!»",
+                    "kNotJohn & TUNG TUNG", "• ΟΙ ROOKIES ΣΤΟ ΠΛΕΥΡΟ ΣΟΥ",
+                    "«Nightgoon! Είμαστε έτοιμοι να μπούμε μπροστά! Πάτα το Backup όταν τα πράγματα ζορίσουν!»",
                     "tung_tung", "#2ecc71", true
             ).withChoices(
-                    new String[]{"💥 Ενεργοποίησε το Street Rage του Tung Tung (+ATK)", "🛡️ Κράτα αμυντική κάλυψη με kNotJohn (+DEF)"},
+                    new String[]{"💥 Street Rage: Tung Tung (+4 ATK)", "🛡️ Tactical Guard: kNotJohn (+3 DEF)"},
                     new String[]{
-                            "Tung Tung: «Έτσι μπράβο! Όποιο Minion πλησιάσει θα ισοπεδωθεί!» (+5 Attack)",
-                            "kNotJohn: «Κατάλαβα, κρατάμε τις γραμμές και καλύπτουμε τα νώτα σας!» (+4 Defense)"
+                            "Tung Tung: «Έτσι μπράβο! Όποιο Minion πλησιάσει θα ισοπεδωθεί!» (+4 Attack)",
+                            "kNotJohn: «Κρατάμε τις γραμμές και καλύπτουμε τα νώτα σας!» (+3 Defense)"
                     },
                     new int[]{1, 2}
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "NIGHTGOON", "• Η ΔΡΑΣΗ",
-                    "«Ο Doctor Douros στέλνει τα τσιράκια του για να σπείρουν χάος στην παραλία. Ώρα να αναλάβω δράση!»",
+                    "NIGHTGOON", "• Η ΕΠΕΜΒΑΣΗ",
+                    "«Ο Doctor Douros νόμιζε ότι θα κάνει κουμάντο στους δρόμους. Ήρθε η ώρα να δει ποιος περιπολεί απόψε!»",
                     "nightgoon", "#00d2ff", false
             ));
 
         } else if (chapter == 3) {
-            cutsceneTitleLabel.setText("CHAPTER 3: Η ΕΝΕΔΡΑ ΤΗΣ STAZIE");
+            cutsceneTitleLabel.setText("CHAPTER 3: Η ΕΝΕΔΡΑ ΤΗΣ STAZIE ΣΤΟ ΛΙΜΑΝΙ");
 
             activeDialogueQueue.add(new DialogueLine(
                     "DOCTOR DOUROS", "• Ο ΕΓΚΕΦΑΛΟΣ",
-                    "«Χάος και αναρχία! Το Greek Dream διαλύεται στα εξ ων συνετέθη! Stazie, αποτελείωσέ τους!»",
+                    "«Νομίζατε πως θα σώσετε την πόλη; Εδώ στο λιμάνι τα πάντα κινούνται σύμφωνα με το σχέδιο μου! Stazieeeee, τελείωσε τη δουλειά!»",
                     "douros", "#a55eea", true
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "STAZIE", "• Η ΣΥΝΕΡΓΟΣ",
-                    "«Ώρα να τσακίσουμε μερικά όνειρα, Doctor! Ας δούμε τι αξίζει αυτός ο Mr. Goun και ο Nightgoon!»",
+                    "STAZIE", "• Η ΕΚΤΕΛΕΣΤΡΙΑ",
+                    "«Κανένας ρομαντισμός δεν επιβιώνει κάτω από τους γερανούς, αγοράκια. Ώρα να μάθετε τι σημαίνει πραγματική καταστροφή!»",
                     "stazzie", "#ff5252", true
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "MR. GOUN", "• Ο ΗΡΩΑΣ ΤΗΣ ΜΑΧΗΣ",
-                    "«Nightgoon, πρόσεξέ την! Η Stazie και ο Douros δεν θα περάσουν απόψε από εδώ!»",
+                    "MR. GOUN", "• Ο ΦΥΛΑΚΑΣ",
+                    "«Nightgoon, πρόσεχε τις γωνίες! Η Stazie χτυπάει γρήγορα και με δηλητήριο. Πρέπει να μείνουμε συγκεντρωμένοι!»",
                     "mrgoun", "#f5af19", false
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "NIGHTGOON", "• ΤΟ ΔΙΛΛΗΜΑ",
-                    "Η Stazie μας επιτίθεται με λύσσα. Πώς θα κινηθούμε;",
+                    "NIGHTGOON", "• ΤΟ ΔΙΛΗΜΜΑ ΤΗΣ ΕΠΙΘΕΣΗΣ",
+                    "Η Stazie ετοιμάζει επίθεση με βαριά υποστήριξη. Πώς θα την αντιμετωπίσουμε;",
                     "nightgoon", "#00d2ff", false
             ).withChoices(
-                    new String[]{"🔥 Ορμήξτε στην ίδια τη Stazie (+ATK)", "🛡️ Πάρτε αμυντική διάταξη με τον Mr. Goun (+DEF)"},
+                    new String[]{"🔥 Άμεση αντεπίθεση στη Stazie (+4 ATK)", "🛡️ Αμυντικός σχηματισμός με Mr. Goun (+3 DEF)"},
                     new String[]{
-                            "«Δώσε της να καταλάβει!» (+5 Attack)",
-                            "«Κρατήστε άμυνα, έρχεται κύμα!» (+4 Defense)"
+                            "«Χτυπάμε κατευθείαν στην πηγή του κινδύνου!» (+4 Attack)",
+                            "«Κλείνουμε τις διόδους και απορροφούμε το πρώτο κύμα!» (+3 Defense)"
                     },
                     new int[]{-1, 2}
             ));
 
         } else if (chapter == 4) {
-            cutsceneTitleLabel.setText("CHAPTER 4: Η ΠΡΟΔΟΣΙΑ ΤΗΣ SUNDAY");
+            cutsceneTitleLabel.setText("CHAPTER 4: Η ΠΡΟΔΟΣΙΑ ΤΗΣ SUNDAY ΣΤΟΝ ΛΕΥΚΟ ΠΥΡΓΟ");
 
             activeDialogueQueue.add(new DialogueLine(
-                    "DOCTOR DOUROS", "• Η ΠΑΓΙΔΑ",
-                    "«Χωρίσαμε τους ήρωες στα δύο! Ο Captain Saver έτρεξε πίσω από τη Sunday στην άλλη άκρη, και τώρα εσύ, Nightgoon, μαζί με τον Mr. Goun είστε ολομόναχοι!»",
+                    "DOCTOR DOUROS", "• Η ΠΑΓΙΔΑ ΕΚΛΕΙΣΕ",
+                    "«Χωριστήκατε σαν αρχάριοι! Ο Captain Saver έτρεξε πίσω από την πρώην του για να την σώσει, κι εσείς μείνατε εκτεθειμένοι σαν κορόιδα!»",
                     "douros", "#a55eea", true
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "SUNDAY", "• Η ΜΟΙΡΑΙΑ ΓΥΝΑΙΚΑ",
-                    "«Συγγνώμη, Captain Saver. Η αγάπη και οι σωτηρίες είναι για τα κορόιδα. Εγώ κοιτάω την πάρτη μου και σε αφήνω εκτεθειμένο στην παγίδα.»",
+                    "SUNDAY", "• Η ΨΥΧΡΗ ΑΛΗΘΕΙΑ",
+                    "«Λυπάμαι, Captain Saver. Ποτέ δεν πίστεψα σε μας. Ο Douros προσφέρει έλεγχο και χρήμα. Εσύ προσφέρεις μόνο αυταπάτες και μια κόκκινη κάπα.»",
                     "sunday", "#e056fd", true
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "CAPTAIN SAVER", "• Ο ΠΛΗΓΩΜΕΝΟΣ ΗΡΩΑΣ",
-                    "«Sunday... γιατί; Όλα όσα έκανα... θυσία για το τίποτα...» — Ο Captain Saver μένει αποσβολωμένος.",
+                    "CAPTAIN SAVER", "• Η ΣΥΝΤΡΙΒΗ",
+                    "«Sunday... όλα ήταν προσχεδιασμένα; Κάθε χαμόγελο, κάθε υπόσχεση;» — Ο Captain Saver μένει παγωμένος μέσα στη βροχή.",
                     "captain_saver", "#e74c3c", false
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "TUNG TUNG & kNotJohn", "• ΟΙ ΠΡΟΣΤΑΤΕΣ",
-                    "«Nightgoon, Mr. Goun! Αναλαμβάνουμε εμείς τα τσιράκια του Douros στην παραλία για να έχετε ελεύθερο πεδίο!»",
+                    "TUNG TUNG & kNotJohn", "• ΟΙ ΦΥΛΑΚΕΣ ΤΩΝ ΝΩΤΩΝ",
+                    "«Nightgoon! Ο Captain Saver κατέρρευσε ψυχολογικά, κρατάμε εμείς την παραλία! Εσύ ανέλαβε τον Douros!»",
                     "tung_tung", "#2ecc71", false
             ).withChoices(
-                    new String[]{"🏙️ Περιόρισε τις ζημιές (Ξεκίνα με Ασπίδα)", "⚔️ Ολική επίθεση στον Doctor Douros (+ATK)"},
+                    new String[]{"🏙️ Ενεργοποίηση Αμυντικής Ασπίδας (Wood Armor)", "⚔️ Τυφλή αντεπίθεση στον Doctor Douros (+4 ATK)"},
                     new String[]{
                             "«Tung, John! Κρατήστε τους εκεί, αναλαμβάνω τον Douros!» (+Wood Armor)",
-                            "«Δεν υπάρχει χρόνος! Χτυπήστε τον Douros με ό,τι έχετε!» (+5 Attack)"
+                            "«Δεν υπάρχει χρόνος για άμυνα! Χτυπήστε τον Douros τώρα!» (+4 Attack)"
                     },
                     new int[]{2, -2}
             ));
 
         } else if (chapter == 5) {
-            cutsceneTitleLabel.setText("CHAPTER 5: Η ΤΕΛΙΚΗ ΑΝΑΜΕΤΡΗΣΗ ΤΟΥ CAPTAIN SAVER");
+            cutsceneTitleLabel.setText("CHAPTER 5: Η ΤΕΛΙΚΗ ΑΝΑΜΕΤΡΗΣΗ ΣΤΗΝ ΤΑΡΑΤΣΑ");
 
             activeDialogueQueue.add(new DialogueLine(
-                    "CAPTAIN SAVER", "• Ο ΗΡΩΑΣ ΜΕ ΤΗΝ ΚΟΚΚΙΝΗ ΚΑΠΑ",
-                    "«Αρκετά, Sunday. Με πρόδωσες, με πάτησες και νόμιζες ότι θα με διαλύσεις. Αλλά η κόκκινη κάπα δεν πέφτει τόσο εύκολα!»",
+                    "CAPTAIN SAVER", "• Ο ΠΛΗΓΩΜΕΝΟΣ ΗΓΕΤΗΣ",
+                    "«Μπορεί να μου ράγισες την καρδιά, Sunday, αλλά δεν θα σε αφήσω να παραδώσεις την πόλη στο χάος. Η κάπα αυτή συμβολίζει όσους δεν έχουν φωνή!»",
                     "captain_saver", "#00d2ff", false
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "SUNDAY", "• Η ΜΟΙΡΑΙΑ ΑΝΤΙΠΑΛΟΣ",
-                    "«Ακόμα στέκεσαι όρθιος, Captain Saver; Νόμιζα ότι θα είχες φύγει κλαίγοντας. Ας δούμε αν αντέχεις την πραγματικότητα!»",
+                    "SUNDAY", "• Η ΑΠΟΛΥΤΗ ΑΠΕΙΛΗ",
+                    "«Ακόμα κηρύττεις, Saver; Η πόλη αυτή ανήκει στους δυνατούς. Απόψε πάνω από αυτά τα κτίρια τελειώνει ο μύθος σου!»",
                     "sunday", "#e056fd", true
             ));
 
             activeDialogueQueue.add(new DialogueLine(
-                    "MR. GOUN, TUNG TUNG & NIGHTGOON", "• ΣΤΟ ΠΛΕΥΡΟ ΤΟΥ",
-                    "«Captain Saver, είμαστε όλοι από πίσω σου! Τελείωσέ το μια για πάντα!»",
+                    "MR. GOUN, TUNG TUNG & NIGHTGOON", "• Η ΕΝΩΜΕΝΗ ΣΥΜΜΑΧΙΑ",
+                    "«Captain Saver, δεν είσαι μόνος! Στεκόμαστε όλοι δίπλα σου! Ώρα να τελειώνουμε με αυτόν τον εφιάλτη!»",
                     "mrgoun", "#f5af19", false
             ).withChoices(
-                    new String[]{"🔥 Captain Saver: Πολέμησε με όλη σου τη δύναμη (+ATK)", "🛡️ Captain Saver: Κράτα την ψυχραιμία σου (+DEF)"},
+                    new String[]{"🔥 Captain Saver: Απόλυτη Συγκέντρωση & Επίθεση (+4 ATK)", "🛡️ Captain Saver: Ατσάλινη Αυτοσυγκράτηση (+3 DEF)"},
                     new String[]{
-                            "CAPTAIN SAVER: «Τέρμα τα λόγια, Sunday. Ώρα να λογαριαστούμε!» (+5 Attack)",
-                            "CAPTAIN SAVER: «Δεν θα με παρασύρεις στο σκοτάδι σου. Στέκομαι ακλόνητος!» (+4 Defense)"
+                            "CAPTAIN SAVER: «Τέρμα τα λόγια, Sunday. Η δικαιοσύνη επιστρέφει στους δρόμους!» (+4 Attack)",
+                            "CAPTAIN SAVER: «Δεν θα με παρασύρεις στην οργή σου.» (+3 Defense)"
                     },
                     new int[]{2, 2}
             ));
@@ -540,12 +540,12 @@ public class BattleViewController {
 
         activeDialogueQueue.add(new DialogueLine(
                 "CAPTAIN SAVER", "• ΟΡΘΙΟΣ ΣΤΟ ΤΕΛΟΣ",
-                "Η Sunday ηττήθηκε. Ο Captain Saver στέκεται στην ταράτσα μαζί με τον Nightgoon, τον Mr. Goun, τον kNotJohn και τον Tung Tung. Η πόλη σώθηκε.",
+                "Η Sunday ηττήθηκε. Ο άνεμος φυσάει πάνω από τη νυχτερινή Θεσσαλονίκη. Ο Captain Saver, ο Nightgoon, ο Mr. Goun, ο kNotJohn και ο Tung Tung στέκονται στην άκρη της ταράτσας. Η πόλη άντεξε.",
                 "captain_saver", "#00d2ff", false
         ).withChoices(
                 new String[]{"🕯️ Συνέχισε ως ο Φύλακας της Ελπίδας", "🏙️ Παρέδωσε τη σκυτάλη στη νέα γενιά"},
                 new String[]{
-                        "ENDING A: Ο Captain Saver ξαναβρίσκει την πίστη του και συνεχίζει να προστατεύει τη Θεσσαλονίκη μαζί με την ομάδα!",
+                        "ENDING A: Ο Captain Saver ξαναβρίσκει την πίστη του και συνεχίζει να προστατεύει τη Θεσσαλονίκη μαζί με τη συμμαχία!",
                         "ENDING B: Ο Captain Saver κρεμάει την κάπα δικαιωμένος και παραδίδει τα κλειδιά της πόλης στον Nightgoon, τον kNotJohn και τον Tung Tung!"
                 },
                 new int[]{5, 5}
@@ -677,20 +677,20 @@ public class BattleViewController {
             updateMoralityIndicator();
 
             if (currentChapter == 0) {
-                if (choiceIdx == 0) bonusAtk += 5;
-                else if (choiceIdx == 1) bonusDef += 4;
+                if (choiceIdx == 0) bonusAtk += 4;
+                else if (choiceIdx == 1) bonusDef += 3;
             } else if (currentChapter == 2) {
-                if (choiceIdx == 0) bonusAtk += 5;
-                else if (choiceIdx == 1) bonusDef += 4;
+                if (choiceIdx == 0) bonusAtk += 4;
+                else if (choiceIdx == 1) bonusDef += 3;
             } else if (currentChapter == 3) {
-                if (choiceIdx == 0) bonusAtk += 5;
-                else if (choiceIdx == 1) bonusDef += 4;
+                if (choiceIdx == 0) bonusAtk += 4;
+                else if (choiceIdx == 1) bonusDef += 3;
             } else if (currentChapter == 4) {
                 if (choiceIdx == 0) startWithArmor = true;
-                else if (choiceIdx == 1) bonusAtk += 5;
+                else if (choiceIdx == 1) bonusAtk += 4;
             } else if (currentChapter == 5) {
-                if (choiceIdx == 0) bonusAtk += 5;
-                else if (choiceIdx == 1) bonusDef += 4;
+                if (choiceIdx == 0) bonusAtk += 4;
+                else if (choiceIdx == 1) bonusDef += 3;
             }
             prepareChapterCharacters(currentChapter);
         }
@@ -885,15 +885,15 @@ public class BattleViewController {
 
     private int getEffectiveHeroAttack() {
         int base = hero.getAttackPower();
-        if (rageBuffTurns > 0) base += 8;
+        if (rageBuffTurns > 0) base += 6;
         if (hero.getStatus() == StatusEffect.DISTRACTED) base = base / 2;
         return base;
     }
 
     private int getEffectiveHeroDefense() {
         int base = hero.getDefense();
-        if (guardBuffTurns > 0) base += 4;
-        if (hero.getStatus() == StatusEffect.WOOD_ARMOR) base = (int) (base * 1.5);
+        if (guardBuffTurns > 0) base += 3;
+        if (hero.getStatus() == StatusEffect.WOOD_ARMOR) base = (int) (base * 1.35);
         return base;
     }
 
@@ -946,14 +946,14 @@ public class BattleViewController {
             playSound("special");
             int hpBefore = enemy.getCurrentHp();
 
-            double multiplier = (hopeScore < 0) ? 1.95 : 1.75;
+            double multiplier = (hopeScore < 0) ? 1.75 : 1.6;
             int rawDmg = (int) (getEffectiveHeroAttack() * multiplier);
             enemy.takeDamage(rawDmg);
             int actualDmg = hpBefore - enemy.getCurrentHp();
 
             if (hopeScore >= 0) {
-                hero.heal(12);
-                spawnFloatingText(195, 145, "+12 HP (HOPE)", "#2ecc71");
+                hero.heal(8);
+                spawnFloatingText(195, 145, "+8 HP (HOPE)", "#2ecc71");
             }
 
             spawnFloatingText(705, 155, "SPECIAL -" + actualDmg + "!", "#e040fb");
@@ -975,9 +975,9 @@ public class BattleViewController {
         playSound("shield");
         hero.setStatus(StatusEffect.WOOD_ARMOR);
         playCardGlow(heroCard, "#00d2ff");
-        spawnFloatingText(195, 165, "+50% ΑΜΥΝΑ", "#00d2ff");
+        spawnFloatingText(195, 165, "+35% ΑΜΥΝΑ", "#00d2ff");
         updateUI();
-        battleLogLabel.setText("Παίρνεις θέση άμυνας (+50% Defense)!");
+        battleLogLabel.setText("Παίρνεις θέση άμυνας (+35% Defense)!");
 
         PauseTransition pause = new PauseTransition(Duration.seconds(1.0));
         pause.setOnFinished(event -> triggerEnemyTurn());
@@ -1066,7 +1066,7 @@ public class BattleViewController {
 
     private void executeKnotJohnAssist() {
         isPlayerTurn = false;
-        backupCooldown = 3;
+        backupCooldown = 4;
         decrementTurnCounters();
 
         playSound("knotjohn");
@@ -1074,12 +1074,12 @@ public class BattleViewController {
         playCardGlow(heroCard, "#a6e22e");
 
         playAssistPopupAnimation("kNotJohn", "BAT STUN & DEFENSE GUARD", "#a6e22e", "knotjohn", () -> {
-            hero.heal(30);
+            hero.heal(18);
             guardBuffTurns = 2;
-            spawnFloatingText(195, 130, "+30 HP & GUARD!", "#2ecc71");
+            spawnFloatingText(195, 130, "+18 HP & GUARD!", "#2ecc71");
 
             int hpBefore = enemy.getCurrentHp();
-            int assistDmg = (int) (hero.getAttackPower() * 1.3);
+            int assistDmg = (int) (hero.getAttackPower() * 1.15);
             enemy.takeDamage(assistDmg);
             enemy.setStatus(StatusEffect.DISTRACTED);
             int actualDmg = hpBefore - enemy.getCurrentHp();
@@ -1088,14 +1088,14 @@ public class BattleViewController {
             spawnFloatingText(705, 145, "STUN -" + actualDmg + " HP!", "#a6e22e");
 
             updateUI();
-            battleLogLabel.setText("Ο kNotJohn μπαίνει στη μάχη! +30 HP, Guard (+4 DEF) και Stun στον εχθρό!");
+            battleLogLabel.setText("Ο kNotJohn μπαίνει στη μάχη! +18 HP, Guard (+3 DEF) και Stun στον εχθρό!");
             checkGameStatus();
         });
     }
 
     private void executeTungTungAssist() {
         isPlayerTurn = false;
-        backupCooldown = 3;
+        backupCooldown = 4;
         decrementTurnCounters();
 
         playSound("special");
@@ -1104,10 +1104,10 @@ public class BattleViewController {
 
         playAssistPopupAnimation("Tung Tung", "BRAWLER SLAM & STREET RAGE", "#2ecc71", "tung_tung", () -> {
             rageBuffTurns = 2;
-            spawnFloatingText(195, 130, "STREET RAGE! (+8 ATK)", "#f39c12");
+            spawnFloatingText(195, 130, "STREET RAGE! (+6 ATK)", "#f39c12");
 
             int hpBefore = enemy.getCurrentHp();
-            int heavyDmg = (int) (hero.getAttackPower() * 1.85);
+            int heavyDmg = (int) (hero.getAttackPower() * 1.55);
             enemy.takeDamage(heavyDmg);
             int actualDmg = hpBefore - enemy.getCurrentHp();
 
@@ -1115,7 +1115,7 @@ public class BattleViewController {
             spawnFloatingText(705, 140, "TUNG SLAM! -" + actualDmg + " HP!", "#2ecc71");
 
             updateUI();
-            battleLogLabel.setText("Ο Tung Tung τσακίζει τον εχθρό για " + actualDmg + " ζημιά και δίνει Street Rage (+8 ATK)!");
+            battleLogLabel.setText("Ο Tung Tung τσακίζει τον εχθρό για " + actualDmg + " ζημιά και δίνει Street Rage (+6 ATK)!");
             checkGameStatus();
         });
     }
@@ -1239,14 +1239,13 @@ public class BattleViewController {
             if (currentWave == 1) {
                 executeBasicEnemyStrike("punch", "Ο Τρελίτσας κουνάει τον κάβουρα με πανικό και σου κάνει ", bossWasDistracted);
             } else {
-                if (roll < 40 && !bossWasDistracted) {
+                if (roll < 45 && !bossWasDistracted) {
                     playCardGlow(enemyCard, "#e67e22");
                     playAttackLunge(enemyCard, false, () -> {
                         playSound("punch");
                         int effDef = getEffectiveHeroDefense();
-                        int hpBefore = hero.getCurrentHp();
-                        int specialDmg = (int) (enemy.getAttackPower() * 1.35);
-                        int actualDamage = Math.max(1, specialDmg - effDef);
+                        int specialDmg = (int) (enemy.getAttackPower() * 1.45);
+                        int actualDamage = Math.max(3, specialDmg - effDef);
                         hero.takeDamage(specialDmg);
 
                         playHitEffect(heroCard, "#e67e22");
@@ -1256,31 +1255,31 @@ public class BattleViewController {
                         finishEnemyTurn();
                     });
                 } else {
-                    executeBasicEnemyStrike("punch", "Ο Golfos σου ρίχνει γροθιά για ", bossWasDistracted);
+                    executeBasicEnemyStrike("punch", "Ο Golfos σου ρίχνει βαριά γροθιά για ", bossWasDistracted);
                 }
             }
             return;
         }
 
         if (currentWave == 1 && maxWaves > 1) {
-            executeBasicEnemyStrike("punch", "Τα τσιράκια του Douros σου ρίχνουν χτύπημα για ", bossWasDistracted);
+            executeBasicEnemyStrike("punch", "Τα τσιράκια του Douros σε χτυπούν συντονισμένα για ", bossWasDistracted);
             return;
         }
 
         if (isDouros(enemy)) {
-            if (roll < 38 && !bossWasDistracted) {
+            if (roll < 45 && !bossWasDistracted) {
                 playCardGlow(enemyCard, "#ff0055");
                 playAttackLunge(enemyCard, false, () -> {
                     playSound("douros_special");
-                    int hpBefore = hero.getCurrentHp();
-                    int specialDmg = (int) (enemy.getAttackPower() * 1.4);
+                    int effDef = getEffectiveHeroDefense();
+                    int specialDmg = (int) (enemy.getAttackPower() * 1.5);
+                    int actualDamage = Math.max(4, specialDmg - effDef);
                     hero.takeDamage(specialDmg);
-                    int actualDamage = hpBefore - hero.getCurrentHp();
 
                     playHitEffect(heroCard, "#ff0055");
                     spawnFloatingText(195, 160, "ΧΑΟΣ -" + actualDamage + " HP!", "#ff0055");
                     updateUI();
-                    battleLogLabel.setText("Χάος στους δρόμους! Χάνεις " + actualDamage + " HP!");
+                    battleLogLabel.setText("Χάος στους δρόμους! Ο Douros προκαλεί " + actualDamage + " ζημιά!");
                     finishEnemyTurn();
                 });
             } else {
@@ -1289,19 +1288,20 @@ public class BattleViewController {
             return;
         }
 
-        if (roll < 42 && hero.getStatus() != StatusEffect.DISTRACTED && !bossWasDistracted) {
+        if (roll < 48 && hero.getStatus() != StatusEffect.DISTRACTED && !bossWasDistracted) {
             playCardGlow(enemyCard, "#e040fb");
             playAttackLunge(enemyCard, false, () -> {
                 playSound("sunday_charm");
                 hero.setStatus(StatusEffect.DISTRACTED);
-                int hpBefore = hero.getCurrentHp();
-                hero.takeDamage((int) (enemy.getAttackPower() * 0.9));
-                int actualDamage = hpBefore - hero.getCurrentHp();
+                int effDef = getEffectiveHeroDefense();
+                int charmDmg = (int) (enemy.getAttackPower() * 1.1);
+                int actualDamage = Math.max(3, charmDmg - effDef);
+                hero.takeDamage(charmDmg);
 
                 playHitEffect(heroCard, "#e040fb");
                 spawnFloatingText(195, 150, "HEARTBREAK! (-50% ATK)", "#e040fb");
                 updateUI();
-                battleLogLabel.setText("Ο/Η " + enemy.getName() + " αποσυντονίζει τον ήρωα και κάνει " + actualDamage + " ζημιά!");
+                battleLogLabel.setText("Η " + enemy.getName() + " σε αποσυντονίζει και κάνει " + actualDamage + " ζημιά!");
                 finishEnemyTurn();
             });
         } else {
